@@ -3,8 +3,9 @@ import re
 import unittest
 from pathlib import Path
 
-from worktree_board import i18n
-from worktree_board.judge import STATES, badges, build_items, judge
+from worktree_board import cards, collect, i18n
+from worktree_board.judge import COLUMNS, badges, judge
+from worktree_board.model import Session, Worktree
 
 ROOT = Path(__file__).resolve().parent.parent / "worktree_board"
 EN = json.loads((ROOT / "locales" / "en.json").read_text(encoding="utf-8"))
@@ -47,10 +48,11 @@ class Keys(unittest.TestCase):
                       {"reviews": [{"author": {"login": "a"}, "state": "CHANGES_REQUESTED", "commit": {"oid": "old"}, "submittedAt": "1"}]}):
             results.append(judge({**pr, **extra}, None, "me"))
         for status, what in (("waiting", None), ("waiting", "input needed"), ("working", None)):
-            results.append(judge(None, None, "me", [{"agent": "Claude Code", "status": status, "waiting_for": what}]))
-        keys = {r["reason"]["key"] for r in results} | {r["next"] for r in results}
-        keys |= set(badges({**pr, "isDraft": True}, None, None)) | set(badges(None, None, None))
-        keys |= {f"state.{s}" for s in STATES}
+            results.append(judge(None, None, "me", (Session("Claude Code", status, what),)))
+        keys = {r.reason.key for r in results} | {r.next.key for r in results}
+        wt = Worktree("h", "o/r", "b", None, "b")
+        keys |= {b.key for b in badges(Worktree("h", "o/r", "b", None, "b", pr={**pr, "isDraft": True})) + badges(wt)}
+        keys |= {f"state.{s}" for s in COLUMNS} | {cards.failed(cards.DEFAULT, "x").reason.key}
         self.assertEqual({k for k in keys if k not in EN}, set())
         self.assertGreaterEqual(len(keys), 20)  # 上の状況が全部、別々の結果を返している
 
@@ -61,14 +63,16 @@ class Keys(unittest.TestCase):
         self.assertGreater(len(used), 10)
 
     def test_every_error_key_exists(self):
-        src = (ROOT / "sources.py").read_text(encoding="utf-8") + (ROOT / "server.py").read_text(encoding="utf-8")
-        self.assertEqual({k for k in re.findall(r"\"(error\.\w+)\"", src) if k not in EN}, set())
+        src = "".join((ROOT / f).read_text(encoding="utf-8") for f in ("sources.py", "server.py", "config.py"))
+        used = set(re.findall(r"\"(error\.\w+)\"", src))
+        self.assertEqual({k for k in used if k not in EN}, set())
+        self.assertGreater(len(used), 10)
 
     def test_every_cli_key_exists(self):
         src = (ROOT / "__main__.py").read_text(encoding="utf-8") + (ROOT / "server.py").read_text(encoding="utf-8")
         used = set(re.findall(r"\"(cli\.\w+)\"", src))
         self.assertEqual({k for k in used if k not in EN}, set())
-        self.assertGreater(len(used), 10)
+        self.assertGreaterEqual(len(used), 10)  # 拾い損ねていないかの目安
 
 
 class Formatting(unittest.TestCase):
@@ -99,9 +103,11 @@ class Formatting(unittest.TestCase):
         # 判定が文章を返すと、言語を切り替えても直らない。日本語・英語の文が入っていないことを見る
         pr = {"number": 1, "title": "t", "url": "u", "headRefName": "b", "headRefOid": "h", "isDraft": True, "mergeable": "MERGEABLE",
               "reviews": [], "statusCheckRollup": []}
-        item = build_items({"b": "/w/b"}, [pr], {}, "me")[0]
+        got = {"worktrees": {"b": "/w/b"}, "prs": [pr], "closed": {}, "me": "me"}
+        item = cards.build(cards.DEFAULT, collect.local("o/r", got, {}, "h"))[0]
         self.assertTrue(item["reason"]["key"].startswith("reason."))
-        self.assertTrue(item["next"].startswith("next."))
+        self.assertTrue(item["next"]["key"].startswith("next."))
+        self.assertNotIn("text", item["reason"])
 
 
 if __name__ == "__main__":

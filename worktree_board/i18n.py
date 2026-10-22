@@ -64,6 +64,13 @@ def fmt(msgs: dict, key: str, args: dict | None = None) -> str:
     return re.sub(r"\{(\w+)\}", value, msgs.get(key, key))
 
 
+def say(msgs: dict, message: dict | None) -> str:
+    """カードの理由・次にすること・印の 1 つ（{key, args} か {text}）を、その言語の文にする。"""
+    if not message:
+        return ""
+    return message["text"] if "text" in message else fmt(msgs, message["key"], message.get("args"))
+
+
 def describe_error(msgs: dict, error: dict) -> str:
     """{key, args} の取得エラーを、その言語の 1 文にする。"""
     return fmt(msgs, "error.fetch", {"detail": fmt(msgs, error["key"], error.get("args"))})

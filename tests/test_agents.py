@@ -6,15 +6,22 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from worktree_board import agents
-from worktree_board.judge import build_items, judge
+from worktree_board import agents, cards, collect
+from worktree_board.judge import judge
+from worktree_board.model import Session, Text
 from worktree_board.server import Board
 
 ME = "me"
 
 
 def session(status, cwd="/w/a", waiting_for=None):
+    """agents.sessions() が返す 1 件の形。"""
     return {"agent": "Claude Code", "status": status, "waiting_for": waiting_for, "since": None, "cwd": cwd}
+
+
+def talk(status, waiting_for=None):
+    """判定が受け取る会話。"""
+    return Session("Claude Code", status, waiting_for)
 
 
 def pr(**kw) -> dict:
@@ -90,27 +97,26 @@ class Assign(unittest.TestCase):
 
 class JudgeWithAgents(unittest.TestCase):
     def test_waiting_comes_first_even_after_merge(self):
-        r = judge(None, {"number": 3, "state": "MERGED"}, ME, [session("working"), session("waiting", waiting_for="input needed")])
-        self.assertEqual((r["state"], r["reason"]), ("mine", {"key": "reason.agent_waiting_for",
-                                                            "args": {"agent": "Claude Code", "what": "input needed"}}))
-        self.assertEqual(r["next"], "next.answer_agent")
-        self.assertEqual(judge(pr(), None, ME, [session("waiting")])["reason"]["key"], "reason.agent_waiting")
+        r = judge(None, {"number": 3, "state": "MERGED"}, ME, (talk("working"), talk("waiting", "input needed")))
+        self.assertEqual((r.column, r.reason), ("mine", Text("reason.agent_waiting_for", {"agent": "Claude Code", "what": "input needed"})))
+        self.assertEqual(r.next, Text("next.answer_agent"))
+        self.assertEqual(judge(pr(), None, ME, (talk("waiting"),)).reason.key, "reason.agent_waiting")
 
     def test_working_agent_beats_pr_state(self):
         failed = pr(statusCheckRollup=[{"__typename": "StatusContext", "context": "x", "state": "FAILURE"}])
-        self.assertEqual(judge(failed, None, ME, [session("working")])["state"], "agent")
-        self.assertEqual(judge(None, None, ME, [session("working")])["state"], "agent")
+        self.assertEqual(judge(failed, None, ME, (talk("working"),)).column, "agent")
+        self.assertEqual(judge(None, None, ME, (talk("working"),)).column, "agent")
 
     def test_idle_agent_leaves_the_pr_state(self):
-        self.assertEqual(judge(pr(), None, ME, [session("idle")])["state"], "review")
-        self.assertEqual(judge(None, None, ME, [session("idle")])["reason"]["key"], "reason.no_pr")
+        self.assertEqual(judge(pr(), None, ME, (talk("idle"),)).column, "review")
+        self.assertEqual(judge(None, None, ME, (talk("idle"),)).reason.key, "reason.no_pr")
 
 
 class PrimaryCheckout(unittest.TestCase):
-    primary = {"path": "/w/repo", "branch": "main"}
-
     def items(self, found, prs=()):
-        return build_items({"feat": "/w/feat"}, list(prs), {}, ME, "o/r", self.primary, agents.assign(found, ["/w/repo", "/w/feat"]))
+        got = {"worktrees": {"feat": "/w/feat"}, "primary": {"path": "/w/repo", "branch": "main"},
+               "prs": list(prs), "closed": {}, "me": ME}
+        return cards.build(cards.DEFAULT, collect.local("o/r", got, agents.assign(found, ["/w/repo", "/w/feat"]), "h"))
 
     def test_primary_shows_only_while_an_agent_works_or_waits(self):
         self.assertEqual([i["label"] for i in self.items([])], ["feat"])
@@ -119,9 +125,12 @@ class PrimaryCheckout(unittest.TestCase):
         self.assertEqual(items["repo"]["state"], "agent")
         self.assertEqual((items["repo"]["badges"], items["repo"]["primary"], items["repo"]["title"]), ([], True, "main"))
 
-    def test_pr_from_the_primary_branch_is_not_a_second_card(self):
+    def test_pr_from_the_primary_branch_is_one_card_on_the_primary(self):
         items = self.items([session("waiting", "/w/repo")], [pr(number=7, headRefName="main")])
         self.assertEqual(sorted(i["label"] for i in items), ["feat", "repo"])
+        # 会話が無くても、primary checkout の branch に開いた PR があれば、primary checkout のカードとして出す
+        items = {i["label"]: i for i in self.items([], [pr(number=7, headRefName="main")])}
+        self.assertEqual((sorted(items), items["repo"]["pr"], items["repo"]["badges"]), (["feat", "repo"], 7, []))
 
     def test_idle_session_is_listed_on_the_card(self):
         items = {i["label"]: i for i in self.items([session("idle", "/w/feat")])}
@@ -131,6 +140,7 @@ class PrimaryCheckout(unittest.TestCase):
 
 class FakeSource:
     label = "o/r"
+    plugin = None
 
     def fetch(self):
         return {"worktrees": {"feat": "/w/feat"}, "primary": {"path": "/w/repo", "branch": "main"},
@@ -140,7 +150,7 @@ class FakeSource:
 class BoardReadsSessionsOnEveryView(unittest.TestCase):
     def test_agent_state_changes_without_a_new_fetch(self):
         found = []
-        board = Board([FakeSource()], sessions=lambda: list(found))
+        board = Board([FakeSource()], sessions=lambda: list(found), host="h")
         board.tick()
         self.assertEqual([i["state"] for i in board.view()["worktrees"]], ["review"])
         found.append(session("working", "/w/feat"))

@@ -42,7 +42,7 @@ select.lang{height:30px;max-width:11em;padding:0 8px;border:1px solid var(--line
 .alert{margin:0 16px 8px;padding:8px 12px;border:1px solid var(--danger);border-radius:8px;background:var(--danger-soft);color:var(--danger);white-space:pre-line;overflow-wrap:anywhere}
 main{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px;padding:4px 16px 16px;align-items:start}
 .col{border-radius:12px;background:var(--col)}
-.col.mine{background:var(--accent-soft)}
+.col:first-child{background:var(--accent-soft)}
 .col.agent .card{border-inline-start:4px solid var(--accent)}
 .col h2{display:flex;align-items:center;gap:8px;margin:0;padding:12px 12px 8px;font-size:16px}
 .count{min-width:24px;padding:0 8px;border:1px solid var(--line);border-radius:999px;background:var(--bg);font-size:14px;font-weight:400;line-height:22px;text-align:center}
@@ -98,6 +98,8 @@ a.card:hover{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)
     });
   }
   const t = (key, args) => fmt(msgs, key, args);
+  // カードの理由・次にすること・印の 1 つ。プラグインが書いた文（text）はそのまま、翻訳のキー（key）は今の言語に直す
+  const say = m => m == null ? '' : m.text ?? t(m.key, m.args);
 
   // 言語の名前（ja_JP・zh-TW・pt-PT など）を、ある言語のコードに直す（サーバーの i18n.normalize と同じ規則）
   function normalize(tag) {
@@ -143,24 +145,24 @@ a.card:hover{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)
     const repo = data.repos.length > 1 ? [i.repo.split('/').pop()] : [];
     // 作業中・答え待ちは理由に出るので、印には返事を終えた（指示待ちの）会話だけを、エージェントごとに 1 つ足す
     const idle = [...new Set(i.agents.filter(a => a.status === 'idle').map(a => a.agent))].map(agent => t('agent.idle', {agent}));
-    const chips = [...repo, ...(i.pr && i.label !== `PR #${i.pr}` ? [`PR #${i.pr}`] : []), ...i.badges.map(b => t(b)), ...idle];
+    const chips = [...repo, ...(i.pr && i.label !== `PR #${i.pr}` ? [`PR #${i.pr}`] : []), ...i.badges.map(say), ...idle];
     return `<${tag} class="card"${link}>
       <span class="top"><span class="label" dir="auto">${esc(i.label)}</span>${i.updated_at ? `<span class="age" title="${esc(t('ui.age_title'))}">${esc(age(i.updated_at))}</span>` : ''}</span>
       <span class="title" dir="auto">${esc(i.title)}</span>
-      <div class="reason">${esc(t(i.reason.key, i.reason.args))}</div>${i.state === 'mine' ? `<div class="next">${esc(t('ui.next', {step: t(i.next)}))}</div>` : ''}
+      <div class="reason">${esc(say(i.reason))}</div>${i.next ? `<div class="next">${esc(t('ui.next', {step: say(i.next)}))}</div>` : ''}
       ${chips.length ? `<span class="chips">${chips.map(c => `<span class="chip">${esc(c)}</span>`).join('')}</span>` : ''}
     </${tag}>`;
   }
 
   function render() {
     $('repo').textContent = data.repos.map(r => r.repo).join(' · ');
-    $('board').innerHTML = data.states.map(s => {
-      const rows = data.worktrees.filter(i => i.state === s), name = t(`state.${s}`);
-      return `<section class="col ${s}" aria-label="${esc(t('ui.column_label', {state: name, n: rows.length}))}">
+    $('board').innerHTML = data.columns.map(({id: s, label}) => {
+      const rows = data.worktrees.filter(i => i.state === s), name = label ?? t(`state.${s}`);
+      return `<section class="col ${esc(s)}" aria-label="${esc(t('ui.column_label', {state: name, n: rows.length}))}">
         <h2>${esc(name)}<span class="count">${rows.length}</span></h2>
         ${rows.length ? `<div class="list">${rows.map(card).join('')}</div>` : `<p class="none">${esc(t('ui.none'))}</p>`}</section>`;
     }).join('');
-    const mine = data.worktrees.filter(i => i.state === 'mine').length;
+    const mine = data.worktrees.filter(i => i.state === data.columns[0]?.id).length;  // 先頭の列（既定は「自分の番」）の枚数
     document.title = `${mine ? `(${mine}) ` : ''}worktree board`;
     const stale = !data.updated_at || Date.now() - Date.parse(data.updated_at) > STALE_MIN * 60000;
     $('stamp').textContent = !data.updated_at ? t('ui.never')

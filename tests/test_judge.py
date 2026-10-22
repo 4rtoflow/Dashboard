@@ -9,10 +9,12 @@ import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
 from pathlib import Path
+from types import SimpleNamespace
 
-from worktree_board import i18n
+from worktree_board import cards, collect, i18n
 from worktree_board.__main__ import main
-from worktree_board.judge import STATES, build_items, change_requests, failed_checks, judge, running_checks, settle
+from worktree_board.judge import change_requests, failed_checks, judge, running_checks, settle
+from worktree_board.model import Text
 from worktree_board.server import Board, Handler
 from worktree_board.sources import FetchError, discover, parse_worktrees
 
@@ -34,9 +36,20 @@ def review(who, state, oid="h1", at="2026-01-01T00:00:00Z"):
     return {"author": {"login": who}, "state": state, "commit": {"oid": oid}, "submittedAt": at}
 
 
+def got(worktrees=None, prs=(), closed=None, primary=None) -> dict:
+    """sources.Source.fetch の結果の形。"""
+    return {"worktrees": worktrees or {}, "primary": primary or {}, "prs": list(prs), "closed": closed or {}, "me": ME}
+
+
+def items(worktrees=None, prs=(), closed=None) -> list[dict]:
+    """既定の判定で作ったカード。"""
+    built = cards.build(cards.DEFAULT, collect.local("o/r", got(worktrees, prs, closed), {}, "h"))
+    return cards.sort(built, list(cards.DEFAULT.columns))
+
+
 class JudgeOrder(unittest.TestCase):
     def state(self, p, closed=None):
-        return judge(p, closed, ME)["state"]
+        return judge(p, closed, ME).column
 
     def test_no_pr(self):
         self.assertEqual(self.state(None), "mine")
@@ -66,9 +79,9 @@ class JudgeOrder(unittest.TestCase):
         self.assertEqual(self.state(pr(reviews=[review("a", "CHANGES_REQUESTED", oid="old")])), "review")
 
     def test_approved_is_mine_unless_changes_requested(self):
-        self.assertEqual(judge(pr(reviews=[review("a", "APPROVED")]), None, ME)["reason"]["key"], "reason.approved")
+        self.assertEqual(judge(pr(reviews=[review("a", "APPROVED")]), None, ME).reason.key, "reason.approved")
         both = pr(reviews=[review("a", "APPROVED"), review("b", "CHANGES_REQUESTED")])
-        self.assertEqual(judge(both, None, ME)["reason"], {"key": "reason.changes_requested", "args": {"who": ["b"]}})
+        self.assertEqual(judge(both, None, ME).reason, Text("reason.changes_requested", {"who": ["b"]}))
 
     def test_default_is_review_wait(self):
         self.assertEqual(self.state(pr()), "review")
@@ -111,25 +124,28 @@ class Settle(unittest.TestCase):
 
 class Items(unittest.TestCase):
     def test_worktree_without_pr_and_pr_without_worktree(self):
-        items = build_items({"wip": "/w/wip", "feat": "/w/feat"}, [pr()], {}, ME)
-        by = {i["label"]: i for i in items}
-        self.assertEqual(by["wip"]["badges"], ["badge.no_pr"])
+        by = {i["label"]: i for i in items({"wip": "/w/wip", "feat": "/w/feat"}, [pr()])}
+        self.assertEqual(by["wip"]["badges"], [{"key": "badge.no_pr", "args": {}}])
         self.assertEqual(by["feat"]["state"], "review")
-        items = build_items({}, [pr()], {}, ME)
-        self.assertEqual((items[0]["label"], items[0]["badges"]), ("PR #1", ["badge.no_worktree"]))
+        only = items({}, [pr()])
+        self.assertEqual((only[0]["label"], only[0]["badges"]), ("PR #1", [{"key": "badge.no_worktree", "args": {}}]))
 
     def test_closed_pr_only_counts_without_open_pr(self):
         closed = {"feat": {"number": 9, "state": "MERGED", "title": "old", "url": "u9"}}
-        self.assertEqual(build_items({"feat": "/w/feat"}, [], closed, ME)[0]["state"], "done")
-        self.assertEqual(build_items({"feat": "/w/feat"}, [pr()], closed, ME)[0]["state"], "review")
+        self.assertEqual(items({"feat": "/w/feat"}, [], closed)[0]["state"], "done")
+        self.assertEqual(items({"feat": "/w/feat"}, [pr()], closed)[0]["state"], "review")
 
     def test_sorted_by_state_then_oldest(self):
         prs = [pr(number=1, headRefName="a", updatedAt="2026-01-03T00:00:00Z"),
                pr(number=2, headRefName="b", updatedAt="2026-01-01T00:00:00Z"),
                pr(number=3, headRefName="c", isDraft=True, updatedAt="2026-01-02T00:00:00Z")]
-        items = build_items({}, prs, {}, ME)
-        self.assertEqual([i["pr"] for i in items], [3, 2, 1])
-        self.assertEqual(STATES.index(items[0]["state"]), 0)
+        self.assertEqual([i["pr"] for i in items({}, prs)], [3, 2, 1])
+
+    def test_card_carries_host_and_next_only_on_my_turn(self):
+        by = {i["label"]: i for i in items({"wip": "/w/wip", "feat": "/w/feat"}, [pr()])}
+        self.assertEqual((by["wip"]["id"], by["wip"]["host"]), ("h:o/r:wip", "h"))
+        self.assertEqual(by["wip"]["next"], {"key": "next.start", "args": {}})
+        self.assertIsNone(by["feat"]["next"])  # レビュー待ちでは次にすることを出さない
 
 
 class Worktrees(unittest.TestCase):
@@ -141,8 +157,8 @@ class Worktrees(unittest.TestCase):
 
 
 class FakeSource:
-    def __init__(self, got=None, error=None, repo="o/r"):
-        self.got, self.error, self.label = got, error, repo
+    def __init__(self, got=None, error=None, repo="o/r", plugin=None):
+        self.got, self.error, self.label, self.plugin = got, error, repo, plugin
 
     def fetch(self):
         if self.error:
@@ -152,8 +168,8 @@ class FakeSource:
 
 class BoardAndServer(unittest.TestCase):
     def test_failed_fetch_keeps_previous_items(self):
-        src = FakeSource({"worktrees": {}, "prs": [pr()], "closed": {}, "me": ME})
-        board = Board([src], sessions=NO_SESSIONS)
+        src = FakeSource(got(prs=[pr()]))
+        board = Board([src], sessions=NO_SESSIONS, host="h")
         board.tick()
         self.assertEqual(len(board.view()["worktrees"]), 1)
         src.error = FetchError("error.failed", detail="boom")
@@ -163,9 +179,9 @@ class BoardAndServer(unittest.TestCase):
         self.assertEqual(v["repos"], [{"repo": "o/r", "error": {"key": "error.failed", "args": {"detail": "boom"}}}])
 
     def test_repos_are_fetched_and_fail_separately(self):
-        a = FakeSource({"worktrees": {}, "prs": [pr(updatedAt="2026-01-02T00:00:00Z")], "closed": {}, "me": ME}, repo="o/a")
-        b = FakeSource({"worktrees": {}, "prs": [pr(updatedAt="2026-01-01T00:00:00Z")], "closed": {}, "me": ME}, repo="o/b")
-        board = Board([a, b], sessions=NO_SESSIONS)
+        a = FakeSource(got(prs=[pr(updatedAt="2026-01-02T00:00:00Z")]), repo="o/a")
+        b = FakeSource(got(prs=[pr(updatedAt="2026-01-01T00:00:00Z")]), repo="o/b")
+        board = Board([a, b], sessions=NO_SESSIONS, host="h")
         board.tick()
         v = board.view()
         # 同じ PR 番号・同じブランチでも repo が違えば別のカード。repo をまたいで、長く動いていないものが上
@@ -184,7 +200,7 @@ class BoardAndServer(unittest.TestCase):
         self.assertEqual(len(board.errors()), 2)
 
     def serve(self):
-        board = Board([FakeSource({"worktrees": {}, "prs": [pr()], "closed": {}, "me": ME})], sessions=NO_SESSIONS)
+        board = Board([FakeSource(got(prs=[pr()]))], sessions=NO_SESSIONS, host="h")
         board.tick()
         Handler.board = board
         server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
@@ -206,7 +222,9 @@ class BoardAndServer(unittest.TestCase):
         port = self.serve()
         code, body = self.request(port, "/api/worktrees")
         self.assertEqual(code, 200)
-        self.assertEqual(json.loads(body)["worktrees"][0]["pr"], 1)
+        v = json.loads(body)
+        self.assertEqual(v["worktrees"][0]["pr"], 1)
+        self.assertEqual([c["id"] for c in v["columns"]], ["mine", "agent", "github", "review", "done"])
         self.assertEqual(self.request(port, "/")[0], 200)
         # 翻訳は、一覧にある言語だけ配る（パスをそのまま開かない）
         self.assertEqual(self.request(port, "/locales/ja.json")[0], 200)
@@ -234,24 +252,26 @@ class Discover(unittest.TestCase):
                 "commit", "-q", "--allow-empty", "-m", "init")
         git(self.root / "a", "worktree", "add", "-q", "-b", "feat", str(self.root / "a-feat"))
         (self.root / "notes").mkdir()
-        (self.root / "README.md").write_text("x")
 
     def test_worktrees_of_one_repo_become_one_source_and_other_folders_are_skipped(self):
-        # `--checkout root/*` を展開した形。a と a-feat は同じ repo。ファイルは知らせずに外す
-        folders = sorted(self.root.iterdir()) + [self.root / "missing"]
-        sources, skipped = discover(folders)
-        self.assertEqual([s.checkout.name for s in sources], ["a", "b"])
+        # a と a-feat は同じ repo。先に書いたほうの名前を使う
+        repos = [SimpleNamespace(path=self.root / n, name=f"o/{n}", plugin=None) for n in ("a", "a-feat", "b", "notes", "missing")]
+        sources, skipped = discover(repos)
+        self.assertEqual([(s.checkout.name, s.repo) for s in sources], [("a", "o/a"), ("b", "o/b")])
         self.assertEqual([p.name for p in skipped], ["notes", "missing"])
 
-    def run_main(self, *argv):
-        with contextlib.redirect_stderr(io.StringIO()) as err:
-            return main(list(argv)), err.getvalue()
+    def test_cli_stops_without_a_config_or_a_repo(self):
+        def run_main(*argv):
+            with contextlib.redirect_stderr(io.StringIO()) as err:
+                return main(list(argv)), err.getvalue()
 
-    def test_cli_refuses_repo_with_several_repos_and_stops_without_repos(self):
-        code, err = self.run_main("--lang", "en", "status", "--checkout", str(self.root / "a"), str(self.root / "b"),
-                                  "--repo", "o/r")
-        self.assertEqual((code, err.strip()), (2, "--repo only works with a single repo"))
-        code, err = self.run_main("--lang", "en", "status", "--checkout", str(self.root / "notes"))
+        code, err = run_main("status", "--config", str(self.root / "none.toml"))
+        self.assertEqual(code, 1)
+        self.assertIn("none.toml", err)
+        self.assertIn("config.example.toml", err)
+        cfg = self.root / "c.toml"
+        cfg.write_text('lang = "en"\n[[repos]]\npath = "notes"\n')
+        code, err = run_main("status", "--config", str(cfg))
         self.assertEqual(code, 1)
         self.assertIn("not a git repo", err)
         self.assertIn("No git repo to watch", err)

@@ -59,28 +59,26 @@ def common_dir(checkout: Path) -> Path | None:
     return (checkout / out).resolve()
 
 
-def discover(checkouts: list[Path], repo: str | None = None) -> tuple[list[Source], list[Path]]:
-    """見る repo の一覧と、git の repo でないので外したフォルダ。同じ repo の worktree をいくつ渡しても 1 つにまとめる
-    （`--checkout ~/work/*` で primary checkout と worktree が並んでいても、カードが二重にならない）。
-    `*` で混ざるファイルは、知らせずに外す。"""
+def discover(repos) -> tuple[list[Source], list[Path]]:
+    """設定ファイルの repo（config.Repo）から、見る repo の一覧と、git の repo でないので外したパスを返す。
+    同じ repo の worktree を何度書いても 1 つにまとめる（先に書いたほうの名前と関数を使う）。"""
     sources, seen, skipped = [], set(), []
-    for checkout in checkouts:
-        if checkout.is_file():
-            continue
-        key = common_dir(checkout)
+    for r in repos:
+        key = common_dir(r.path)
         if key is None:
-            skipped.append(checkout)
+            skipped.append(r.path)
         elif key not in seen:
             seen.add(key)
-            sources.append(Source(checkout, repo))
+            sources.append(Source(r.path, r.name, r.plugin))
     return sources, skipped
 
 
 class Source:
-    """1 つの repo の材料の取り方。checkout はその repo のどこでもよい（worktree の中でも、primary checkout でも）。"""
+    """1 つの repo の材料の取り方。checkout はその repo のどこでもよい（worktree の中でも、primary checkout でも）。
+    plugin はその repo の状態を決める関数（cards.Plugin）。"""
 
-    def __init__(self, checkout: Path, repo: str | None = None):
-        self.checkout, self.repo, self.me = checkout, repo, None
+    def __init__(self, checkout: Path, repo: str | None = None, plugin=None):
+        self.checkout, self.repo, self.plugin, self.me = checkout, repo, plugin, None
 
     @property
     def label(self) -> str:

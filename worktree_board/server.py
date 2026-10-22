@@ -11,8 +11,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from . import agents, i18n
-from .judge import STATES, build_items, settle, sort_items
+from . import agents, cards, collect, i18n
+from .judge import settle
 from .sources import FetchError
 
 DASHBOARD = Path(__file__).with_name("dashboard.html")
@@ -45,10 +45,11 @@ class Board:
     """見直しのたびに、どの repo の材料も取り直す。取れなかった repo は、前の材料を残してエラーを出す。
     エージェントの会話は手元のファイルを読むだけなので、見直しを待たずに、カードを出すたびに読み直す。"""
 
-    def __init__(self, sources, interval: int = 60, sessions=agents.sessions):
+    def __init__(self, sources, interval: int = 60, sessions=agents.sessions, host: str | None = None):
         self.watches = [Watch(s) for s in sources]
         self.interval = interval
         self.sessions = sessions
+        self.host = host or collect.host_name()
         self.mu = threading.Lock()
         self.wake = threading.Event()
         self.updated_at: str | None = None  # どれかの repo が取れた最後の時刻
@@ -88,17 +89,18 @@ class Board:
                 pass
 
     def view(self) -> dict:
+        """worktree を集め、repo ごとの状態を決める関数に聞いてカードにする。"""
         found = self.sessions()
         with self.mu:
             repos = [{"repo": w.source.label, "error": w.error} for w in self.watches]
-            got = [(w.source.label, w.got) for w in self.watches if w.got]
+            got = [(w.source.label, w.source.plugin or cards.DEFAULT, w.got) for w in self.watches if w.got]
             # 会話は、repo をまたいでいちばん深い worktree に振り分ける（repo の中に別の repo を置いていても二重にしない）
-            paths = [p for _, g in got for p in [*g["worktrees"].values(), (g.get("primary") or {}).get("path")] if p]
+            paths = [p for _, _, g in got for p in [*g["worktrees"].values(), (g.get("primary") or {}).get("path")] if p]
             by_path = agents.assign(found, paths)
-            items = [i for label, g in got
-                     for i in build_items(g["worktrees"], g["prs"], g["closed"], g["me"], label, g.get("primary"), by_path)]
+            items = [i for label, plugin, g in got for i in cards.build(plugin, collect.local(label, g, by_path, self.host))]
+            columns = cards.merge_columns([w.source.plugin or cards.DEFAULT for w in self.watches])
             return {"repos": repos, "updated_at": self.updated_at, "checking": self.checking,
-                    "states": STATES, "worktrees": sort_items(items)}
+                    "columns": [{"id": c.id, "label": c.label} for c in columns], "worktrees": cards.sort(items, columns)}
 
 
 class Handler(BaseHTTPRequestHandler):

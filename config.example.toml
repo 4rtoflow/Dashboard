@@ -1,0 +1,15 @@
+# worktree_board の設定ファイルの見本。~/.config/worktree_board/config.toml に写して直す。
+# 別の場所に置くなら、起動するときに --config <パス> で渡す。
+
+# port = 8765        # Dashboard を出すポート（書かなければ 8765）
+# interval = 60      # GitHub を見直す間隔の秒数（書かなければ 60）
+# lang = "ja"        # 端末に出す言語（書かなければ LC_ALL・LC_MESSAGES・LANG から決める）
+
+# 見る repo を 1 つずつ書く。path は、その repo の中のフォルダならどこでもよい（primary checkout でも worktree でも）。
+[[repos]]
+path = "~/work/my-repo"
+# name = "owner/my-repo"                       # GitHub の OWNER/REPO（書かなければ path の remote から決める）
+# plugin = "~/.config/worktree_board/my_repo.py"  # 状態を決める関数のファイル（書かなければ既定の判定）。相対パスはこのファイルのフォルダから
+
+# [[repos]]
+# path = "~/work/another-repo"
