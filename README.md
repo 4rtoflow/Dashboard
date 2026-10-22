@@ -21,17 +21,25 @@
 cd dashboard-template
 python3 -m worktree_board serve --checkout ~/work/my-repo   # http://localhost:8765 に Dashboard を出す
 python3 -m worktree_board status --checkout ~/work/my-repo   # 今の状態を 1 回だけ端末に出す
+python3 -m worktree_board serve --checkout ~/work/*         # ~/work の下の repo をまとめて見る
 ```
 
 | オプション | 意味 |
 |---|---|
-| `--checkout PATH` | 見る repo のフォルダ。省略すると今のフォルダ |
-| `--repo OWNER/REPO` | 省略すると、`gh` が `checkout` の remote から決める |
+| `--checkout PATH...` | 見る repo のフォルダ。いくつ並べても、繰り返してもよい。省略すると今のフォルダ |
+| `--repo OWNER/REPO` | 省略すると、`gh` が `checkout` の remote から決める。見る repo が 1 つのときだけ使える |
 | `--port N` | `serve` の待ち受けポート（既定 8765） |
 | `--interval N` | `serve` が見直す間隔の秒数（既定 60） |
 | `--lang CODE` | 端末に出す言語（省略すると `LC_ALL`・`LC_MESSAGES`・`LANG` から決める。合うものが無ければ英語） |
 
 Dashboard の「今すぐ見直す」で、次の回を待たずに見直せる。止めるのは Ctrl-C。
+
+### 複数の repo を見る
+
+- 同じ repo の primary checkout と worktree を両方渡しても、1 つの repo として数える（`~/work/*` に worktree が並んでいてもよい）。
+- git の repo でないフォルダは、端末に知らせて飛ばす。`*` で混ざるファイルは黙って外す。
+- 画面の列は repo をまたいで 1 つにまとめ、カードに repo の名前を付ける（repo が 1 つなら付けない）。
+- 取れなかった repo があっても、ほかの repo のカードは出し続ける。取れなかった repo は、前に取れたカードのまま、画面の上にエラーを出す。
 
 ## 何を見ているか
 
@@ -109,7 +117,7 @@ python3 -m unittest discover -s tests -t .
 | | |
 |---|---|
 | `GET /` | Dashboard |
-| `GET /api/worktrees` | カードの一覧（JSON）。理由・次にすること・印・エラーは翻訳のキーと引数 |
+| `GET /api/worktrees` | カードの一覧と、見ている repo ごとのエラー（JSON）。理由・次にすること・印・エラーは翻訳のキーと引数 |
 | `GET /api/locales` | 言語の一覧（コード・その言語での名前・文字の向き） |
 | `GET /locales/<コード>.json` | その言語の文章 |
 | `POST /api/refresh` | 次の回を待たずに見直す（`X-Dashboard: 1` ヘッダーが要る） |

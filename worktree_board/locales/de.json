@@ -54,11 +54,14 @@
   "cli.help_serve": "Zeigt das Dashboard an und aktualisiert es regelmäßig",
   "cli.help_status": "Gibt den aktuellen Stand einmalig aus",
   "cli.help_repo": "OWNER/REPO (Standard: gh ermittelt es aus dem Remote des Checkouts)",
-  "cli.help_checkout": "Ein Ordner im Repository (Standard: der aktuelle Ordner)",
+  "cli.help_checkout": "Ordner in den Repositorys, die beobachtet werden sollen; mehrere angeben oder die Option wiederholen. Ordner, die keine Git-Repositorys sind, werden übersprungen (Standard: der aktuelle Ordner)",
   "cli.help_port": "Port, auf dem gelauscht wird (Standard 8765)",
   "cli.help_interval": "Aktualisierungsintervall in Sekunden (Standard 60)",
   "cli.help_lang": "Sprachcode (Standard: aus der Umgebung)",
   "cli.empty": "Nichts anzuzeigen (keine offenen PRs von dir und keine Worktrees außer dem Haupt-Checkout)",
   "cli.serving": "Dashboard: http://localhost:{port} (Aktualisierung alle {interval} s; Beenden mit Strg-C)",
-  "cli.port_busy": "Port {port} kann nicht verwendet werden: {detail} (wähle mit --port einen anderen)"
+  "cli.port_busy": "Port {port} kann nicht verwendet werden: {detail} (wähle mit --port einen anderen)",
+  "cli.skipped": "{path} wird übersprungen: kein Git-Repository",
+  "cli.no_repos": "Kein Git-Repository zum Beobachten (prüfe die Ordner bei --checkout)",
+  "cli.repo_needs_one_checkout": "--repo funktioniert nur mit einem einzigen Repository"
 }

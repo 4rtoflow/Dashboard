@@ -54,11 +54,14 @@
   "cli.help_serve": "Mostra o painel e o atualiza periodicamente",
   "cli.help_status": "Imprime o estado atual uma única vez",
   "cli.help_repo": "OWNER/REPO (padrão: o gh descobre a partir do remote do checkout)",
-  "cli.help_checkout": "Uma pasta dentro do repositório (padrão: a pasta atual)",
+  "cli.help_checkout": "Pastas dentro dos repositórios a acompanhar; informe várias ou repita a opção. Pastas que não são repositórios git são ignoradas (padrão: a pasta atual)",
   "cli.help_port": "Porta de escuta (padrão 8765)",
   "cli.help_interval": "Intervalo de atualização em segundos (padrão 60)",
   "cli.help_lang": "Código do idioma (padrão: obtido do ambiente)",
   "cli.empty": "Nada para mostrar (nenhum PR seu aberto e nenhum worktree além do checkout principal)",
   "cli.serving": "Painel: http://localhost:{port} (atualiza a cada {interval} s; pare com Ctrl-C)",
-  "cli.port_busy": "Não foi possível usar a porta {port}: {detail} (escolha outra com --port)"
+  "cli.port_busy": "Não foi possível usar a porta {port}: {detail} (escolha outra com --port)",
+  "cli.skipped": "Ignorando {path}: não é um repositório git",
+  "cli.no_repos": "Nenhum repositório git para acompanhar (verifique as pastas passadas em --checkout)",
+  "cli.repo_needs_one_checkout": "--repo só funciona com um único repositório"
 }

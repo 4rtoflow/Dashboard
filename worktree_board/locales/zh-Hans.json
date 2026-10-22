@@ -54,11 +54,14 @@
   "cli.help_serve": "显示仪表盘并定期刷新",
   "cli.help_status": "只打印一次当前状态",
   "cli.help_repo": "OWNER/REPO（默认由 gh 根据 checkout 的 remote 判断）",
-  "cli.help_checkout": "仓库内的文件夹（默认为当前文件夹）",
+  "cli.help_checkout": "要查看的仓库内的文件夹，可列出多个或重复指定；不是 git 仓库的文件夹会被跳过（默认为当前文件夹）",
   "cli.help_port": "监听端口（默认 8765）",
   "cli.help_interval": "刷新间隔，单位为秒（默认 60）",
   "cli.help_lang": "语言代码（默认取自环境）",
   "cli.empty": "没有可显示的内容（没有你打开的 PR，也没有主 checkout 以外的 worktree）",
   "cli.serving": "仪表盘：http://localhost:{port}（每 {interval} 秒刷新一次；按 Ctrl-C 停止）",
-  "cli.port_busy": "无法使用端口 {port}：{detail}（请用 --port 指定其他端口）"
+  "cli.port_busy": "无法使用端口 {port}：{detail}（请用 --port 指定其他端口）",
+  "cli.skipped": "跳过 {path}：不是 git 仓库",
+  "cli.no_repos": "没有可查看的 git 仓库（请检查传给 --checkout 的文件夹）",
+  "cli.repo_needs_one_checkout": "--repo 只能在只查看一个仓库时使用"
 }

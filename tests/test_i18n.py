@@ -62,6 +62,12 @@ class Keys(unittest.TestCase):
         src = (ROOT / "sources.py").read_text(encoding="utf-8") + (ROOT / "server.py").read_text(encoding="utf-8")
         self.assertEqual({k for k in re.findall(r"\"(error\.\w+)\"", src) if k not in EN}, set())
 
+    def test_every_cli_key_exists(self):
+        src = (ROOT / "__main__.py").read_text(encoding="utf-8") + (ROOT / "server.py").read_text(encoding="utf-8")
+        used = set(re.findall(r"\"(cli\.\w+)\"", src))
+        self.assertEqual({k for k in used if k not in EN}, set())
+        self.assertGreater(len(used), 10)
+
 
 class Formatting(unittest.TestCase):
     def test_lists_use_the_language_separator(self):

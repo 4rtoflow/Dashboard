@@ -54,11 +54,14 @@
   "cli.help_serve": "Afficher le tableau de bord et l'actualiser périodiquement",
   "cli.help_status": "Afficher une seule fois l'état actuel",
   "cli.help_repo": "OWNER/REPO (par défaut : gh le déduit du remote du checkout)",
-  "cli.help_checkout": "Un dossier du dépôt (par défaut : le dossier courant)",
+  "cli.help_checkout": "Dossiers des dépôts à suivre ; vous pouvez en donner plusieurs ou répéter l'option. Les dossiers qui ne sont pas des dépôts git sont ignorés (par défaut : le dossier courant)",
   "cli.help_port": "Port d'écoute (8765 par défaut)",
   "cli.help_interval": "Intervalle d'actualisation en secondes (60 par défaut)",
   "cli.help_lang": "Code de langue (par défaut : celui de l'environnement)",
   "cli.empty": "Rien à afficher (aucune PR ouverte de votre part, aucun worktree en dehors du checkout principal)",
   "cli.serving": "Tableau de bord : http://localhost:{port} (actualisé toutes les {interval} s ; arrêt avec Ctrl-C)",
-  "cli.port_busy": "Impossible d'utiliser le port {port} : {detail} (choisissez-en un autre avec --port)"
+  "cli.port_busy": "Impossible d'utiliser le port {port} : {detail} (choisissez-en un autre avec --port)",
+  "cli.skipped": "{path} ignoré : ce n'est pas un dépôt git",
+  "cli.no_repos": "Aucun dépôt git à suivre (vérifiez les dossiers passés à --checkout)",
+  "cli.repo_needs_one_checkout": "--repo ne s'utilise qu'avec un seul dépôt"
 }

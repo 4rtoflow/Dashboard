@@ -54,11 +54,14 @@
   "cli.help_serve": "Muestra el panel y lo actualiza periódicamente",
   "cli.help_status": "Imprime el estado actual una sola vez",
   "cli.help_repo": "OWNER/REPO (por defecto, gh lo deduce del remote del checkout)",
-  "cli.help_checkout": "Una carpeta dentro del repositorio (por defecto, la carpeta actual)",
+  "cli.help_checkout": "Carpetas dentro de los repositorios que quieres ver; puedes poner varias o repetir la opción. Las carpetas que no son repositorios git se omiten (por defecto, la carpeta actual)",
   "cli.help_port": "Puerto de escucha (por defecto 8765)",
   "cli.help_interval": "Intervalo de actualización en segundos (por defecto 60)",
   "cli.help_lang": "Código de idioma (por defecto, el del entorno)",
   "cli.empty": "No hay nada que mostrar (no tienes PRs abiertos ni worktrees aparte del checkout principal)",
   "cli.serving": "Panel: http://localhost:{port} (se actualiza cada {interval} s; detenlo con Ctrl-C)",
-  "cli.port_busy": "No se puede usar el puerto {port}: {detail} (elige otro con --port)"
+  "cli.port_busy": "No se puede usar el puerto {port}: {detail} (elige otro con --port)",
+  "cli.skipped": "Se omite {path}: no es un repositorio git",
+  "cli.no_repos": "No hay ningún repositorio git que ver (revisa las carpetas de --checkout)",
+  "cli.repo_needs_one_checkout": "--repo solo se puede usar con un único repositorio"
 }

@@ -54,11 +54,14 @@
   "cli.help_serve": "Dashboard を出して、定期的に見直す",
   "cli.help_status": "今の状態を 1 回だけ表示する",
   "cli.help_repo": "OWNER/REPO（省略すると、checkout の remote から gh が決める）",
-  "cli.help_checkout": "repo の中のフォルダ（省略すると今のフォルダ）",
+  "cli.help_checkout": "見る repo の中のフォルダ。いくつ並べても、繰り返してもよい。git の repo でないフォルダは飛ばす（省略すると今のフォルダ）",
   "cli.help_port": "待ち受けポート（既定 8765）",
   "cli.help_interval": "見直す間隔の秒数（既定 60）",
   "cli.help_lang": "言語コード（省略すると環境から決める）",
   "cli.empty": "見るものが無い（自分の開いている PR も、primary checkout 以外の worktree も無い）",
   "cli.serving": "Dashboard: http://localhost:{port}（{interval} 秒おきに見直す。止めるのは Ctrl-C）",
-  "cli.port_busy": "ポート {port} を使えない: {detail}（--port で別のポートを選ぶ）"
+  "cli.port_busy": "ポート {port} を使えない: {detail}（--port で別のポートを選ぶ）",
+  "cli.skipped": "{path} は git の repo ではないので飛ばす",
+  "cli.no_repos": "見る git の repo が無い（--checkout に渡したフォルダを確かめる）",
+  "cli.repo_needs_one_checkout": "--repo は、見る repo が 1 つのときだけ使える"
 }

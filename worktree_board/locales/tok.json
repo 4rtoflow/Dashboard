@@ -54,11 +54,14 @@
   "cli.help_serve": "o pana e lipu lukin. o lukin sin lon tenpo mute.",
   "cli.help_status": "o pana e sona ni lon tenpo wan taso",
   "cli.help_repo": "OWNER/REPO (ilo gh li alasa e ona)",
-  "cli.help_checkout": "poki lon insa pi repo (ala la: poki ni)",
+  "cli.help_checkout": "poki lon insa pi repo pi lukin. sina ken pana e poki mute. poki li repo git ala la mi lukin ala e ona (ala la: poki ni)",
   "cli.help_port": "lupa kute (ala la: 8765)",
   "cli.help_interval": "tenpo lili pi lukin sin (ala la: 60)",
   "cli.help_lang": "nimi pi toki (ala la: ilo li alasa e ona)",
   "cli.empty": "ijo ala li lon (PR open sina li lon ala. tomo pali ante li lon ala.)",
   "cli.serving": "lipu lukin: http://localhost:{port} (mi lukin sin lon tenpo lili {interval}. o pini kepeken Ctrl-C)",
-  "cli.port_busy": "lupa {port} li ken ala: {detail} (o kepeken nimi --port tawa lupa ante)"
+  "cli.port_busy": "lupa {port} li ken ala: {detail} (o kepeken nimi --port tawa lupa ante)",
+  "cli.skipped": "{path} li repo git ala. mi lukin ala e ona",
+  "cli.no_repos": "repo git ala li lon (o lukin e poki pi --checkout)",
+  "cli.repo_needs_one_checkout": "repo wan taso li lon la sina ken kepeken --repo"
 }

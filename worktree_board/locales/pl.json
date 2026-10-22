@@ -54,11 +54,14 @@
   "cli.help_serve": "Pokaż panel i odświeżaj go cyklicznie",
   "cli.help_status": "Wypisz bieżący stan jednorazowo",
   "cli.help_repo": "OWNER/REPO (domyślnie gh ustala to na podstawie remote'a checkoutu)",
-  "cli.help_checkout": "Folder wewnątrz repozytorium (domyślnie bieżący folder)",
+  "cli.help_checkout": "Foldery wewnątrz obserwowanych repozytoriów; można podać kilka lub powtórzyć opcję. Foldery, które nie są repozytoriami git, są pomijane (domyślnie bieżący folder)",
   "cli.help_port": "Port nasłuchiwania (domyślnie 8765)",
   "cli.help_interval": "Odstęp odświeżania w sekundach (domyślnie 60)",
   "cli.help_lang": "Kod języka (domyślnie z otoczenia)",
   "cli.empty": "Nie ma nic do pokazania (brak Twoich otwartych PR-ów i worktree poza głównym checkoutem)",
   "cli.serving": "Panel: http://localhost:{port} (odświeżanie co {interval} s; zatrzymaj skrótem Ctrl-C)",
-  "cli.port_busy": "Nie można użyć portu {port}: {detail} (wybierz inny przez --port)"
+  "cli.port_busy": "Nie można użyć portu {port}: {detail} (wybierz inny przez --port)",
+  "cli.skipped": "Pomijam {path}: to nie jest repozytorium git",
+  "cli.no_repos": "Brak repozytoriów git do obserwowania (sprawdź foldery podane w --checkout)",
+  "cli.repo_needs_one_checkout": "--repo działa tylko z jednym repozytorium"
 }

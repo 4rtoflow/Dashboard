@@ -54,11 +54,14 @@
   "cli.help_serve": "대시보드를 표시하고 주기적으로 새로고침합니다",
   "cli.help_status": "현재 상태를 한 번만 출력합니다",
   "cli.help_repo": "OWNER/REPO (기본값: gh가 checkout의 remote에서 판단)",
-  "cli.help_checkout": "저장소 안의 폴더 (기본값: 현재 폴더)",
+  "cli.help_checkout": "볼 저장소 안의 폴더. 여러 개를 나열하거나 반복해서 지정할 수 있으며, git 저장소가 아닌 폴더는 건너뜁니다 (기본값: 현재 폴더)",
   "cli.help_port": "수신 포트 (기본값 8765)",
   "cli.help_interval": "새로고침 간격(초) (기본값 60)",
   "cli.help_lang": "언어 코드 (기본값: 환경에서 가져옴)",
   "cli.empty": "표시할 항목이 없습니다 (열려 있는 내 PR도, 기본 checkout 외의 worktree도 없음)",
   "cli.serving": "대시보드: http://localhost:{port} ({interval}초마다 새로고침, Ctrl-C로 종료)",
-  "cli.port_busy": "포트 {port}을(를) 사용할 수 없습니다: {detail} (--port로 다른 포트를 지정하세요)"
+  "cli.port_busy": "포트 {port}을(를) 사용할 수 없습니다: {detail} (--port로 다른 포트를 지정하세요)",
+  "cli.skipped": "{path}은(는) git 저장소가 아니므로 건너뜁니다",
+  "cli.no_repos": "볼 git 저장소가 없습니다 (--checkout에 지정한 폴더를 확인하세요)",
+  "cli.repo_needs_one_checkout": "--repo는 저장소가 하나일 때만 사용할 수 있습니다"
 }

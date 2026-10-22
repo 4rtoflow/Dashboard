@@ -54,11 +54,14 @@
   "cli.help_serve": "Hiển thị bảng điều khiển và làm mới định kỳ",
   "cli.help_status": "In trạng thái hiện tại một lần",
   "cli.help_repo": "OWNER/REPO (mặc định: gh suy ra từ remote của checkout)",
-  "cli.help_checkout": "Một thư mục trong repo (mặc định: thư mục hiện tại)",
+  "cli.help_checkout": "Các thư mục bên trong những repo cần theo dõi; có thể ghi nhiều thư mục hoặc lặp lại tùy chọn. Thư mục không phải repo git sẽ bị bỏ qua (mặc định: thư mục hiện tại)",
   "cli.help_port": "Cổng lắng nghe (mặc định 8765)",
   "cli.help_interval": "Khoảng thời gian làm mới tính bằng giây (mặc định 60)",
   "cli.help_lang": "Mã ngôn ngữ (mặc định: lấy từ môi trường)",
   "cli.empty": "Không có gì để hiển thị (không có PR nào đang mở của bạn và không có worktree nào ngoài checkout chính)",
   "cli.serving": "Bảng điều khiển: http://localhost:{port} (làm mới mỗi {interval} giây; dừng bằng Ctrl-C)",
-  "cli.port_busy": "Không thể dùng cổng {port}: {detail} (chọn cổng khác bằng --port)"
+  "cli.port_busy": "Không thể dùng cổng {port}: {detail} (chọn cổng khác bằng --port)",
+  "cli.skipped": "Bỏ qua {path}: không phải repo git",
+  "cli.no_repos": "Không có repo git nào để theo dõi (kiểm tra các thư mục truyền cho --checkout)",
+  "cli.repo_needs_one_checkout": "--repo chỉ dùng được khi có một repo"
 }

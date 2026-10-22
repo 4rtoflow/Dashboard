@@ -54,11 +54,14 @@
   "cli.help_serve": "Show the dashboard and refresh it periodically",
   "cli.help_status": "Print the current state once",
   "cli.help_repo": "OWNER/REPO (default: gh works it out from the checkout's remote)",
-  "cli.help_checkout": "A folder inside the repo (default: the current folder)",
+  "cli.help_checkout": "Folders inside the repos to watch; list several or repeat the option. Folders that are not git repos are skipped (default: the current folder)",
   "cli.help_port": "Port to listen on (default 8765)",
   "cli.help_interval": "Refresh interval in seconds (default 60)",
   "cli.help_lang": "Language code (default: taken from the environment)",
   "cli.empty": "Nothing to show (no open PRs of yours and no worktrees besides the primary checkout)",
   "cli.serving": "Dashboard: http://localhost:{port} (refreshes every {interval} s; stop with Ctrl-C)",
-  "cli.port_busy": "Cannot use port {port}: {detail} (pick another with --port)"
+  "cli.port_busy": "Cannot use port {port}: {detail} (pick another with --port)",
+  "cli.skipped": "Skipping {path}: not a git repo",
+  "cli.no_repos": "No git repo to watch (check the folders given to --checkout)",
+  "cli.repo_needs_one_checkout": "--repo only works with a single repo"
 }

@@ -122,8 +122,15 @@ def badges(pr: dict | None, closed: dict | None, path: str | None) -> list[str]:
     return out
 
 
-def build_items(worktrees: dict[str, str], prs: list[dict], closed: dict[str, dict], me: str) -> list[dict]:
-    """カードの一覧。worktrees はブランチ名 → パス、closed はブランチ名 → 閉じた PR。worktree の無い開いた PR も 1 枚にする。"""
+def sort_items(items: list[dict]) -> list[dict]:
+    """同じ状態の中では、長く動いていないものを上に（動きの無い PR ほど気付きたい）。PR の無いものは最後。repo をまたいでも同じ順。"""
+    return sorted(items, key=lambda i: (STATES.index(i["state"]), i["updated_at"] is None, i["updated_at"] or ""))
+
+
+def build_items(worktrees: dict[str, str], prs: list[dict], closed: dict[str, dict], me: str,
+                repo: str = "") -> list[dict]:
+    """1 つの repo のカードの一覧。worktrees はブランチ名 → パス、closed はブランチ名 → 閉じた PR。
+    worktree の無い開いた PR も 1 枚にする。repo はカードに付ける repo の名前。"""
     open_by_branch = {p["headRefName"]: p for p in prs}
     rows = [(Path(path).name, path, branch) for branch, path in worktrees.items()]
     rows += [(f"pr-{p['number']}", None, b) for b, p in open_by_branch.items() if b not in worktrees]
@@ -134,11 +141,9 @@ def build_items(worktrees: dict[str, str], prs: list[dict], closed: dict[str, di
         shown = pr or done or {}
         items.append({
             **judge(pr, done, me),
-            "id": name, "label": name if path else f"PR #{shown['number']}", "path": path, "branch": branch,
-            "title": shown.get("title") or branch,
+            "id": f"{repo}:{name}", "repo": repo, "label": name if path else f"PR #{shown['number']}",
+            "path": path, "branch": branch, "title": shown.get("title") or branch,
             "pr": shown.get("number"), "url": shown.get("url"), "updated_at": (pr or {}).get("updatedAt"),
             "badges": badges(pr, done, path),
         })
-    # 同じ状態の中では、長く動いていないものを上に（動きの無い PR ほど気付きたい）。PR の無いものは最後
-    items.sort(key=lambda i: (STATES.index(i["state"]), i["updated_at"] is None, i["updated_at"] or ""))
-    return items
+    return sort_items(items)

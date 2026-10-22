@@ -54,11 +54,14 @@
   "cli.help_serve": "แสดงแดชบอร์ดและรีเฟรชเป็นระยะ",
   "cli.help_status": "แสดงสถานะปัจจุบันเพียงครั้งเดียว",
   "cli.help_repo": "OWNER/REPO (ค่าเริ่มต้น: gh หาจาก remote ของ checkout)",
-  "cli.help_checkout": "โฟลเดอร์ภายใน repo (ค่าเริ่มต้น: โฟลเดอร์ปัจจุบัน)",
+  "cli.help_checkout": "โฟลเดอร์ภายใน repo ที่จะติดตาม ใส่ได้หลายโฟลเดอร์หรือระบุตัวเลือกซ้ำ โฟลเดอร์ที่ไม่ใช่ repo ของ git จะถูกข้าม (ค่าเริ่มต้น: โฟลเดอร์ปัจจุบัน)",
   "cli.help_port": "พอร์ตที่รับฟัง (ค่าเริ่มต้น 8765)",
   "cli.help_interval": "ระยะเวลารีเฟรชเป็นวินาที (ค่าเริ่มต้น 60)",
   "cli.help_lang": "รหัสภาษา (ค่าเริ่มต้น: ใช้ตามสภาพแวดล้อม)",
   "cli.empty": "ไม่มีอะไรให้แสดง (ไม่มี PR ที่เปิดอยู่ของคุณ และไม่มี worktree นอกจาก checkout หลัก)",
   "cli.serving": "แดชบอร์ด: http://localhost:{port} (รีเฟรชทุก {interval} วินาที หยุดด้วย Ctrl-C)",
-  "cli.port_busy": "ใช้พอร์ต {port} ไม่ได้: {detail} (เลือกพอร์ตอื่นด้วย --port)"
+  "cli.port_busy": "ใช้พอร์ต {port} ไม่ได้: {detail} (เลือกพอร์ตอื่นด้วย --port)",
+  "cli.skipped": "ข้าม {path}: ไม่ใช่ repo ของ git",
+  "cli.no_repos": "ไม่มี repo ของ git ให้ติดตาม (ตรวจสอบโฟลเดอร์ที่ส่งให้ --checkout)",
+  "cli.repo_needs_one_checkout": "--repo ใช้ได้เฉพาะเมื่อมี repo เดียว"
 }

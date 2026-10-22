@@ -39,7 +39,7 @@ button.refresh:disabled{border-color:var(--line);color:var(--sub);cursor:default
 .theme button:hover{background:var(--accent-soft)}
 .theme button[aria-pressed="true"]{position:relative;border-color:var(--accent);background:var(--accent);color:var(--on-accent);font-weight:700;cursor:default}
 select.lang{height:30px;max-width:11em;padding:0 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font:inherit;font-size:13px}
-.alert{margin:0 16px 8px;padding:8px 12px;border:1px solid var(--danger);border-radius:8px;background:var(--danger-soft);color:var(--danger)}
+.alert{margin:0 16px 8px;padding:8px 12px;border:1px solid var(--danger);border-radius:8px;background:var(--danger-soft);color:var(--danger);white-space:pre-line;overflow-wrap:anywhere}
 main{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:12px;padding:4px 16px 16px;align-items:start}
 .col{border-radius:12px;background:var(--col)}
 .col.mine{background:var(--accent-soft)}
@@ -137,7 +137,9 @@ a.card:hover{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)
   function card(i) {
     const tag = i.url ? 'a' : 'div';
     const link = i.url ? ` href="${esc(i.url)}" target="_blank" rel="noopener"` : '';
-    const chips = [...(i.pr && i.label !== `PR #${i.pr}` ? [`PR #${i.pr}`] : []), ...i.badges.map(b => t(b))];
+    // repo が 2 つ以上のときだけ、どの repo のカードかを出す（OWNER/ は略す）
+    const repo = data.repos.length > 1 ? [i.repo.split('/').pop()] : [];
+    const chips = [...repo, ...(i.pr && i.label !== `PR #${i.pr}` ? [`PR #${i.pr}`] : []), ...i.badges.map(b => t(b))];
     return `<${tag} class="card"${link}>
       <span class="top"><span class="label" dir="auto">${esc(i.label)}</span>${i.updated_at ? `<span class="age" title="${esc(t('ui.age_title'))}">${esc(age(i.updated_at))}</span>` : ''}</span>
       <span class="title" dir="auto">${esc(i.title)}</span>
@@ -147,7 +149,7 @@ a.card:hover{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)
   }
 
   function render() {
-    $('repo').textContent = data.repo || '';
+    $('repo').textContent = data.repos.map(r => r.repo).join(' · ');
     $('board').innerHTML = data.states.map(s => {
       const rows = data.worktrees.filter(i => i.state === s), name = t(`state.${s}`);
       return `<section class="col ${s}" aria-label="${esc(t('ui.column_label', {state: name, n: rows.length}))}">
@@ -160,7 +162,9 @@ a.card:hover{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)
     $('stamp').textContent = !data.updated_at ? t('ui.never')
       : t(stale ? 'ui.updated_stale' : 'ui.updated', {time: hhmm(data.updated_at), min: STALE_MIN});
     $('stamp').classList.toggle('stale', stale);
-    showAlert(data.error ? t('error.fetch', {detail: t(data.error.key, data.error.args)}) : '');
+    // 取れなかった repo ごとに 1 行。ほかの repo のカードはそのまま出す
+    showAlert(data.repos.filter(r => r.error)
+      .map(r => `${r.repo}: ${t('error.fetch', {detail: t(r.error.key, r.error.args)})}`).join('\n'));
     const busy = refreshing || data.checking;
     $('refresh').disabled = busy;
     $('refresh').textContent = t(busy ? 'ui.refreshing' : 'ui.refresh');

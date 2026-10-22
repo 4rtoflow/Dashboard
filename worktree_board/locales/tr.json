@@ -54,11 +54,14 @@
   "cli.help_serve": "Panoyu gösterir ve düzenli aralıklarla yeniler",
   "cli.help_status": "Mevcut durumu bir kez yazdırır",
   "cli.help_repo": "OWNER/REPO (varsayılan: gh, checkout'un remote'undan belirler)",
-  "cli.help_checkout": "Depo içindeki bir klasör (varsayılan: geçerli klasör)",
+  "cli.help_checkout": "İzlenecek depoların içindeki klasörler; birden fazla verebilir ya da seçeneği tekrarlayabilirsiniz. Git deposu olmayan klasörler atlanır (varsayılan: geçerli klasör)",
   "cli.help_port": "Dinlenecek port (varsayılan 8765)",
   "cli.help_interval": "Saniye cinsinden yenileme aralığı (varsayılan 60)",
   "cli.help_lang": "Dil kodu (varsayılan: ortamdan alınır)",
   "cli.empty": "Gösterilecek bir şey yok (açık PR'ınız ve ana checkout dışında worktree yok)",
   "cli.serving": "Pano: http://localhost:{port} ({interval} sn'de bir yenilenir; durdurmak için Ctrl-C)",
-  "cli.port_busy": "{port} portu kullanılamıyor: {detail} (--port ile başka bir port seçin)"
+  "cli.port_busy": "{port} portu kullanılamıyor: {detail} (--port ile başka bir port seçin)",
+  "cli.skipped": "{path} atlandı: git deposu değil",
+  "cli.no_repos": "İzlenecek git deposu yok (--checkout ile verilen klasörleri kontrol edin)",
+  "cli.repo_needs_one_checkout": "--repo yalnızca tek bir depoyla kullanılabilir"
 }

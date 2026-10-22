@@ -5,51 +5,73 @@ import json
 import re
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from . import i18n
-from .judge import STATES, build_items, settle
+from .judge import STATES, build_items, settle, sort_items
 from .sources import FetchError
 
 DASHBOARD = Path(__file__).with_name("dashboard.html")
 WRITE_HEADER = "X-Dashboard"
 
 
-class Board:
-    """見直しのたびに材料を取り直して、カードの一覧を作り直す。取れなかった回は、前の一覧を残してエラーを出す。"""
+class Watch:
+    """1 つの repo の見張り。最後に取れた材料と、今の回のエラー（{key, args}。文章にするのは画面と CLI）を持つ。"""
 
-    def __init__(self, source, interval: int = 60):
-        self.source, self.interval = source, interval
+    def __init__(self, source):
+        self.source = source
+        self.got: dict | None = None
+        self.error: dict | None = None
+        self.mergeable: dict[int, str] = {}
+
+    def fetch(self) -> tuple[dict | None, dict | None]:
+        """材料とエラーのどちらか。"""
+        try:
+            got = self.source.fetch()
+            return {**got, "prs": settle(got["prs"], self.mergeable)}, None
+        except FetchError as e:
+            return None, e.to_dict()
+        except json.JSONDecodeError:
+            return None, {"key": "error.bad_json", "args": {}}
+        except OSError as e:
+            return None, {"key": "error.os", "args": {"detail": str(e)}}
+
+
+class Board:
+    """見直しのたびに、どの repo の材料も取り直す。取れなかった repo は、前の材料を残してエラーを出す。"""
+
+    def __init__(self, sources, interval: int = 60):
+        self.watches = [Watch(s) for s in sources]
+        self.interval = interval
         self.mu = threading.Lock()
         self.wake = threading.Event()
-        self.items: list[dict] = []
-        self.updated_at: str | None = None
-        self.error: dict | None = None  # {key, args}。文章にするのは画面と CLI
+        self.updated_at: str | None = None  # どれかの repo が取れた最後の時刻
         self.checking = False
-        self.mergeable: dict[int, str] = {}
 
     def tick(self) -> None:
         self.checking = True
         try:
-            got = self.source.fetch()
-            items = build_items(got["worktrees"], settle(got["prs"], self.mergeable), got["closed"], got["me"])
-        except FetchError as e:
-            error = e.to_dict()
-        except json.JSONDecodeError:
-            error = {"key": "error.bad_json", "args": {}}
-        except OSError as e:
-            error = {"key": "error.os", "args": {"detail": str(e)}}
-        else:
-            error = None
+            # repo ごとの gh の待ちを重ねる（repo が増えても、見直しが repo の数の倍に延びない）
+            with ThreadPoolExecutor(max_workers=max(1, min(4, len(self.watches)))) as pool:
+                results = list(pool.map(Watch.fetch, self.watches))
         finally:
             self.checking = False
         with self.mu:
-            if error is None:
-                self.items, self.updated_at = items, datetime.now(timezone.utc).isoformat(timespec="seconds")
-            self.error = error
+            for w, (got, error) in zip(self.watches, results):
+                if error is None:
+                    w.got = got
+                w.error = error
+            if any(error is None for _, error in results):
+                self.updated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    def errors(self) -> list[dict]:
+        """今の回に取れなかった repo（{repo, error}）。"""
+        with self.mu:
+            return [{"repo": w.source.label, "error": w.error} for w in self.watches if w.error]
 
     def loop(self, first: bool = True) -> None:
         """見直しを繰り返す。first が False なら、最初の 1 回は済んでいるものとして間隔を待つ。"""
@@ -65,8 +87,11 @@ class Board:
 
     def view(self) -> dict:
         with self.mu:
-            return {"repo": self.source.repo, "updated_at": self.updated_at, "error": self.error,
-                    "checking": self.checking, "states": STATES, "worktrees": self.items}
+            repos = [{"repo": w.source.label, "error": w.error} for w in self.watches]
+            items = [i for w in self.watches if w.got
+                     for i in build_items(w.got["worktrees"], w.got["prs"], w.got["closed"], w.got["me"], w.source.label)]
+            return {"repos": repos, "updated_at": self.updated_at, "checking": self.checking,
+                    "states": STATES, "worktrees": sort_items(items)}
 
 
 class Handler(BaseHTTPRequestHandler):

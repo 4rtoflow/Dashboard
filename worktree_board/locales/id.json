@@ -54,11 +54,14 @@
   "cli.help_serve": "Tampilkan dasbor dan segarkan secara berkala",
   "cli.help_status": "Cetak status saat ini satu kali saja",
   "cli.help_repo": "OWNER/REPO (bawaan: gh menentukannya dari remote checkout)",
-  "cli.help_checkout": "Folder di dalam repo (bawaan: folder saat ini)",
+  "cli.help_checkout": "Folder di dalam repo yang ingin dipantau; boleh beberapa sekaligus atau mengulang opsinya. Folder yang bukan repo git dilewati (bawaan: folder saat ini)",
   "cli.help_port": "Port yang didengarkan (bawaan 8765)",
   "cli.help_interval": "Interval penyegaran dalam detik (bawaan 60)",
   "cli.help_lang": "Kode bahasa (bawaan: diambil dari lingkungan)",
   "cli.empty": "Tidak ada yang ditampilkan (tidak ada PR terbukamu dan tidak ada worktree selain checkout utama)",
   "cli.serving": "Dasbor: http://localhost:{port} (disegarkan tiap {interval} detik; hentikan dengan Ctrl-C)",
-  "cli.port_busy": "Port {port} tidak dapat digunakan: {detail} (pilih port lain dengan --port)"
+  "cli.port_busy": "Port {port} tidak dapat digunakan: {detail} (pilih port lain dengan --port)",
+  "cli.skipped": "Melewati {path}: bukan repo git",
+  "cli.no_repos": "Tidak ada repo git untuk dipantau (periksa folder yang diberikan ke --checkout)",
+  "cli.repo_needs_one_checkout": "--repo hanya bisa dipakai dengan satu repo"
 }

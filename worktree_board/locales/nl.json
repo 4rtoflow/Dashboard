@@ -54,11 +54,14 @@
   "cli.help_serve": "Toon het dashboard en vernieuw het regelmatig",
   "cli.help_status": "Toon de huidige status één keer",
   "cli.help_repo": "OWNER/REPO (standaard: gh leidt het af uit de remote van de checkout)",
-  "cli.help_checkout": "Een map in de repository (standaard: de huidige map)",
+  "cli.help_checkout": "Mappen in de repositories die je wilt volgen; geef er meerdere op of herhaal de optie. Mappen die geen git-repository zijn, worden overgeslagen (standaard: de huidige map)",
   "cli.help_port": "Poort om op te luisteren (standaard 8765)",
   "cli.help_interval": "Vernieuwingsinterval in seconden (standaard 60)",
   "cli.help_lang": "Taalcode (standaard: uit de omgeving)",
   "cli.empty": "Niets om te tonen (geen openstaande PR's van jou en geen worktrees naast de hoofd-checkout)",
   "cli.serving": "Dashboard: http://localhost:{port} (wordt elke {interval} s vernieuwd; stoppen met Ctrl-C)",
-  "cli.port_busy": "Poort {port} kan niet worden gebruikt: {detail} (kies een andere met --port)"
+  "cli.port_busy": "Poort {port} kan niet worden gebruikt: {detail} (kies een andere met --port)",
+  "cli.skipped": "{path} overgeslagen: geen git-repository",
+  "cli.no_repos": "Geen git-repository om te volgen (controleer de mappen bij --checkout)",
+  "cli.repo_needs_one_checkout": "--repo werkt alleen met één repository"
 }

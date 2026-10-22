@@ -1,14 +1,20 @@
+import contextlib
+import io
 import json
+import subprocess
+import tempfile
 import threading
 import unittest
 import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
+from pathlib import Path
 
 from worktree_board import i18n
+from worktree_board.__main__ import main
 from worktree_board.judge import STATES, build_items, change_requests, failed_checks, judge, running_checks, settle
 from worktree_board.server import Board, Handler
-from worktree_board.sources import FetchError, parse_worktrees
+from worktree_board.sources import FetchError, discover, parse_worktrees
 
 ME = "me"
 
@@ -105,7 +111,7 @@ class Settle(unittest.TestCase):
 class Items(unittest.TestCase):
     def test_worktree_without_pr_and_pr_without_worktree(self):
         items = build_items({"wip": "/w/wip", "feat": "/w/feat"}, [pr()], {}, ME)
-        by = {i["id"]: i for i in items}
+        by = {i["label"]: i for i in items}
         self.assertEqual(by["wip"]["badges"], ["badge.no_pr"])
         self.assertEqual(by["feat"]["state"], "review")
         items = build_items({}, [pr()], {}, ME)
@@ -134,10 +140,8 @@ class Worktrees(unittest.TestCase):
 
 
 class FakeSource:
-    repo = "o/r"
-
-    def __init__(self, got=None, error=None):
-        self.got, self.error = got, error
+    def __init__(self, got=None, error=None, repo="o/r"):
+        self.got, self.error, self.label = got, error, repo
 
     def fetch(self):
         if self.error:
@@ -148,17 +152,38 @@ class FakeSource:
 class BoardAndServer(unittest.TestCase):
     def test_failed_fetch_keeps_previous_items(self):
         src = FakeSource({"worktrees": {}, "prs": [pr()], "closed": {}, "me": ME})
-        board = Board(src)
+        board = Board([src])
         board.tick()
         self.assertEqual(len(board.view()["worktrees"]), 1)
         src.error = FetchError("error.failed", detail="boom")
         board.tick()
         v = board.view()
         self.assertEqual(len(v["worktrees"]), 1)
-        self.assertEqual(v["error"], {"key": "error.failed", "args": {"detail": "boom"}})
+        self.assertEqual(v["repos"], [{"repo": "o/r", "error": {"key": "error.failed", "args": {"detail": "boom"}}}])
+
+    def test_repos_are_fetched_and_fail_separately(self):
+        a = FakeSource({"worktrees": {}, "prs": [pr(updatedAt="2026-01-02T00:00:00Z")], "closed": {}, "me": ME}, repo="o/a")
+        b = FakeSource({"worktrees": {}, "prs": [pr(updatedAt="2026-01-01T00:00:00Z")], "closed": {}, "me": ME}, repo="o/b")
+        board = Board([a, b])
+        board.tick()
+        v = board.view()
+        # 同じ PR 番号・同じブランチでも repo が違えば別のカード。repo をまたいで、長く動いていないものが上
+        self.assertEqual([i["repo"] for i in v["worktrees"]], ["o/b", "o/a"])
+        self.assertEqual(len({i["id"] for i in v["worktrees"]}), 2)
+        stamp = v["updated_at"]
+        b.error = FetchError("error.failed", detail="boom")
+        board.tick()
+        v = board.view()
+        self.assertEqual([i["repo"] for i in v["worktrees"]], ["o/b", "o/a"])  # 取れなかった repo は前の材料のまま
+        self.assertEqual([r["repo"] for r in v["repos"] if r["error"]], ["o/b"])
+        self.assertEqual(board.errors(), [{"repo": "o/b", "error": {"key": "error.failed", "args": {"detail": "boom"}}}])
+        self.assertGreaterEqual(v["updated_at"], stamp)  # 1 つでも取れていれば、見直しの時刻は進む
+        a.error = FetchError("error.failed", detail="boom")
+        board.tick()
+        self.assertEqual(len(board.errors()), 2)
 
     def serve(self):
-        board = Board(FakeSource({"worktrees": {}, "prs": [pr()], "closed": {}, "me": ME}))
+        board = Board([FakeSource({"worktrees": {}, "prs": [pr()], "closed": {}, "me": ME})])
         board.tick()
         Handler.board = board
         server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
@@ -191,6 +216,44 @@ class BoardAndServer(unittest.TestCase):
         self.assertEqual(self.request(port, "/api/refresh", "POST")[0], 403)
         self.assertEqual(self.request(port, "/api/refresh", "POST", {"X-Dashboard": "1"})[0], 202)
         self.assertEqual(self.request(port, "/api/worktrees", headers={"Host": "evil.example"})[0], 403)
+
+
+def git(cwd, *args):
+    subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True)
+
+
+class Discover(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name).resolve()
+        for name in ("a", "b"):
+            git(self.root, "init", "-q", name)
+            git(self.root / name, "-c", "user.name=t", "-c", "user.email=t@example.com",
+                "commit", "-q", "--allow-empty", "-m", "init")
+        git(self.root / "a", "worktree", "add", "-q", "-b", "feat", str(self.root / "a-feat"))
+        (self.root / "notes").mkdir()
+        (self.root / "README.md").write_text("x")
+
+    def test_worktrees_of_one_repo_become_one_source_and_other_folders_are_skipped(self):
+        # `--checkout root/*` を展開した形。a と a-feat は同じ repo。ファイルは知らせずに外す
+        folders = sorted(self.root.iterdir()) + [self.root / "missing"]
+        sources, skipped = discover(folders)
+        self.assertEqual([s.checkout.name for s in sources], ["a", "b"])
+        self.assertEqual([p.name for p in skipped], ["notes", "missing"])
+
+    def run_main(self, *argv):
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            return main(list(argv)), err.getvalue()
+
+    def test_cli_refuses_repo_with_several_repos_and_stops_without_repos(self):
+        code, err = self.run_main("--lang", "en", "status", "--checkout", str(self.root / "a"), str(self.root / "b"),
+                                  "--repo", "o/r")
+        self.assertEqual((code, err.strip()), (2, "--repo only works with a single repo"))
+        code, err = self.run_main("--lang", "en", "status", "--checkout", str(self.root / "notes"))
+        self.assertEqual(code, 1)
+        self.assertIn("not a git repo", err)
+        self.assertIn("No git repo to watch", err)
 
 
 if __name__ == "__main__":

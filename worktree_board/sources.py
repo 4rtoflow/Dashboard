@@ -46,11 +46,46 @@ def parse_worktrees(porcelain: str) -> tuple[str | None, dict[str, str]]:
     return primary, out
 
 
+def common_dir(checkout: Path) -> Path | None:
+    """checkout が属する repo の .git の場所（どの worktree から聞いても同じ）。git の repo でなければ None。"""
+    if not checkout.is_dir():
+        return None
+    try:
+        out = run(["git", "rev-parse", "--git-common-dir"], checkout).strip()
+    except FetchError as e:
+        if e.key != "error.failed":  # git が無いのは、repo でないのとは別に知らせる
+            raise
+        return None
+    return (checkout / out).resolve()
+
+
+def discover(checkouts: list[Path], repo: str | None = None) -> tuple[list[Source], list[Path]]:
+    """見る repo の一覧と、git の repo でないので外したフォルダ。同じ repo の worktree をいくつ渡しても 1 つにまとめる
+    （`--checkout ~/work/*` で primary checkout と worktree が並んでいても、カードが二重にならない）。
+    `*` で混ざるファイルは、知らせずに外す。"""
+    sources, seen, skipped = [], set(), []
+    for checkout in checkouts:
+        if checkout.is_file():
+            continue
+        key = common_dir(checkout)
+        if key is None:
+            skipped.append(checkout)
+        elif key not in seen:
+            seen.add(key)
+            sources.append(Source(checkout, repo))
+    return sources, skipped
+
+
 class Source:
     """1 つの repo の材料の取り方。checkout はその repo のどこでもよい（worktree の中でも、primary checkout でも）。"""
 
     def __init__(self, checkout: Path, repo: str | None = None):
         self.checkout, self.repo, self.me = checkout, repo, None
+
+    @property
+    def label(self) -> str:
+        """画面に出す repo の名前。gh に聞く前や、聞けなかったときはフォルダの名前。"""
+        return self.repo or self.checkout.name
 
     def gh(self, *args: str) -> str:
         return run(["gh", *args], self.checkout)

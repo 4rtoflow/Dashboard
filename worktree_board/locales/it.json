@@ -54,11 +54,14 @@
   "cli.help_serve": "Mostra la dashboard e la aggiorna periodicamente",
   "cli.help_status": "Stampa lo stato attuale una sola volta",
   "cli.help_repo": "OWNER/REPO (predefinito: gh lo ricava dal remote del checkout)",
-  "cli.help_checkout": "Una cartella all'interno del repository (predefinito: la cartella corrente)",
+  "cli.help_checkout": "Cartelle all'interno dei repository da seguire; se ne possono indicare più di una o ripetere l'opzione. Le cartelle che non sono repository git vengono saltate (predefinito: la cartella corrente)",
   "cli.help_port": "Porta di ascolto (predefinito 8765)",
   "cli.help_interval": "Intervallo di aggiornamento in secondi (predefinito 60)",
   "cli.help_lang": "Codice lingua (predefinito: dall'ambiente)",
   "cli.empty": "Niente da mostrare (nessuna tua PR aperta e nessun worktree oltre al checkout principale)",
   "cli.serving": "Dashboard: http://localhost:{port} (si aggiorna ogni {interval} s; Ctrl-C per fermare)",
-  "cli.port_busy": "Impossibile usare la porta {port}: {detail} (sceglierne un'altra con --port)"
+  "cli.port_busy": "Impossibile usare la porta {port}: {detail} (sceglierne un'altra con --port)",
+  "cli.skipped": "{path} saltato: non è un repository git",
+  "cli.no_repos": "Nessun repository git da seguire (controlla le cartelle passate a --checkout)",
+  "cli.repo_needs_one_checkout": "--repo si può usare solo con un unico repository"
 }
