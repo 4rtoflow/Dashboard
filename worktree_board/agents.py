@@ -12,9 +12,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 CLAUDE = "Claude Code"
-# Claude Code の status → このツールの状態。waiting は許可・質問への答えを待っている（何を待つかは waitingFor）、
+# Claude Code の status → このツールの状態。shell はシェルのコマンドを走らせている間で、Claude Code 自身の会話の一覧も
+# busy と同じく作業中と出す。waiting は許可・質問への答えを待っている（何を待つかは waitingFor）、
 # idle は返事を終えて次の指示を待っている
-CLAUDE_STATUS = {"busy": "working", "waiting": "waiting", "idle": "idle"}
+CLAUDE_STATUS = {"busy": "working", "shell": "working", "waiting": "waiting", "idle": "idle"}
 
 
 def claude_dir(env=None) -> Path:

@@ -49,8 +49,10 @@ class ClaudeSessions(unittest.TestCase):
         self.write("7.json", "{broken")  # 書き換えの途中
         self.write("8.json", ["not", "a", "dict"])
         self.write("9.key", "secret")  # 会話の鍵など、json 以外は読まない
+        self.write("10.json", {"pid": me, "cwd": "/w/f", "status": "shell"})  # シェルのコマンドを走らせている間
         got = {s["cwd"]: s for s in agents.claude_sessions(self.base)}
-        self.assertEqual({c: s["status"] for c, s in got.items()}, {"/w/a": "working", "/w/b": "waiting", "/w/c": "idle"})
+        self.assertEqual({c: s["status"] for c, s in got.items()},
+                         {"/w/a": "working", "/w/b": "waiting", "/w/c": "idle", "/w/f": "working"})
         self.assertEqual(got["/w/b"]["waiting_for"], "input needed")
         self.assertEqual(got["/w/a"]["since"], "2026-10-22T06:48:20+00:00")
         self.assertEqual(got["/w/a"]["agent"], "Claude Code")
