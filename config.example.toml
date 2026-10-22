@@ -9,7 +9,8 @@
 [[repos]]
 path = "~/work/my-repo"
 # name = "owner/my-repo"                       # GitHub の OWNER/REPO（書かなければ path の remote から決める）
-# plugin = "~/.config/worktree_board/my_repo.py"  # 状態を決める関数のファイル（書かなければ既定の判定）。相対パスはこのファイルのフォルダから
+# plugin = "my_repo.py"   # 状態を決める関数のファイル（書かなければ既定の判定）。相対パスはこのファイルのフォルダから。
+#                           # 書き方は AGENTS.md の「2. プラグインを書く」、見本は examples/
 
 # [[repos]]
 # path = "~/work/another-repo"
