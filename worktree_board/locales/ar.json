@@ -67,6 +67,8 @@
   "error.plugin_load": "تعذّر تحميل الإضافة {path}: {detail}",
   "error.plugin_no_state": "لا توجد الدالة state(worktree) في {path}",
   "error.plugin_columns": "{path}: يجب أن تكون COLUMNS قائمة غير فارغة من معرّفات أعمدة غير مكررة (نصوص أو Column)",
+  "error.plugin_needs": "{path}: لا يمكن أن تحتوي NEEDS إلا على \"issue\" و\"last_reply\" (الموجود {value})",
+  "error.plugin_issue_of": "فشلت الدالة issue_of في الإضافة: {detail}",
   "cli.description": "اطّلع على أيٍّ من أشجار عمل git وطلبات الدمج لديك تنتظر منك إجراءً",
   "cli.help_serve": "عرض لوحة المتابعة وتحديثها دوريًا",
   "cli.help_status": "طباعة الحالة الحالية مرة واحدة",

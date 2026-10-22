@@ -67,6 +67,8 @@
   "error.plugin_load": "Kon de plugin {path} niet laden: {detail}",
   "error.plugin_no_state": "{path} heeft geen functie state(worktree)",
   "error.plugin_columns": "{path}: COLUMNS moet een niet-lege lijst van unieke kolom-id's zijn (strings of Column)",
+  "error.plugin_needs": "{path}: NEEDS mag alleen \"issue\" en \"last_reply\" bevatten (gevonden: {value})",
+  "error.plugin_issue_of": "issue_of van de plugin is mislukt: {detail}",
   "cli.description": "Bekijk welke van je git-worktrees en PR's op jou wachten",
   "cli.help_serve": "Toon het dashboard en vernieuw het regelmatig",
   "cli.help_status": "Toon de huidige status één keer",

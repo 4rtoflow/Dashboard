@@ -11,7 +11,7 @@ import traceback
 from dataclasses import dataclass
 from pathlib import Path
 
-from .cards import DEFAULT, Plugin
+from .cards import DEFAULT, NEEDS, Plugin
 from .model import Column
 
 PATH = Path("~/.config/worktree_board/config.toml")
@@ -106,7 +106,20 @@ def load_plugin(file: Path, index: int) -> Plugin:
     state = getattr(module, "state", None)
     if not callable(state):
         raise ConfigError("error.plugin_no_state", path=str(file))
-    return Plugin(state, columns(getattr(module, "COLUMNS", None), file), str(file))
+    issue_of = getattr(module, "issue_of", DEFAULT.issue_of)
+    if not callable(issue_of):
+        raise ConfigError("error.plugin_load", path=str(file), detail="issue_of is not a function")
+    return Plugin(state, columns(getattr(module, "COLUMNS", None), file), str(file), needs(getattr(module, "NEEDS", ()), file), issue_of)
+
+
+def needs(value, file: Path) -> frozenset[str]:
+    """NEEDS は、取ってほしい時間のかかる材料（"issue"・"last_reply"）の並び。書かなければ何も取らない。"""
+    if isinstance(value, str) or not isinstance(value, (list, tuple, set, frozenset)):
+        raise ConfigError("error.plugin_needs", path=str(file), value=repr(value))
+    unknown = [v for v in value if v not in NEEDS]
+    if unknown:
+        raise ConfigError("error.plugin_needs", path=str(file), value=repr(unknown[0]))
+    return frozenset(value)
 
 
 def columns(value, file: Path) -> tuple[Column, ...]:

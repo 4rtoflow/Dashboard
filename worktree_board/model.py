@@ -15,6 +15,7 @@ class Session:
     status: str
     waiting_for: str | None = None  # waiting のとき、何を待っているか（エージェントが書いたまま）
     since: str | None = None  # 今の status になった時刻（ISO 8601）
+    last_reply: str | None = None  # エージェントが最後に書いた返事の文。プラグインの NEEDS に "last_reply" があるときだけ入る
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,9 @@ class Worktree:
 
     pr は開いている PR、closed は開いた PR が無いときの同じ branch の閉じた PR。どちらも `gh pr list --json` の 1 件のまま
     （pr の欄は sources.FIELDS、closed の欄は sources.CLOSED_FIELDS）。path が None なら、worktree の無い開いた PR。
+    issue_number は branch 名から引いた Issue の番号（プラグインの issue_of で決まり、既定は branch 名の中の番号）。
+    issue はその Issue（number・title・state・stateReason・url・updatedAt・labels・assignees。labels はラベル名、
+    assignees はログイン名の並び）。プラグインの NEEDS に "issue" があり、番号の Issue があるときだけ入る。
     """
     host: str  # worktree がある PC の名前
     repo: str  # OWNER/REPO
@@ -34,6 +38,8 @@ class Worktree:
     closed: dict | None = None
     sessions: tuple[Session, ...] = ()
     me: str = ""  # GitHub のログイン名
+    issue_number: int | None = None
+    issue: dict | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)

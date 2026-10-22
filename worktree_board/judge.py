@@ -14,7 +14,15 @@ import re
 from .model import Session, Text, Turn, Worktree
 
 COLUMNS = ["mine", "agent", "github", "review", "done"]  # 画面の列の順
+ISSUE_NUMBER = re.compile(r"(?:^|[/_#-])(\d+)(?=$|[/_-])")
 FAILED = {"FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ACTION_REQUIRED", "ERROR"}
+
+
+def issue_of(branch: str | None) -> int | None:
+    """branch 名の中の番号を Issue の番号とみなす（feature/5323-x・fix/12_y・5-z）。区切り（/ - _ #）に挟まれた数だけを見るので、
+    release/2.1 や lodash-4.17.21 のような版の数は拾わない。"""
+    m = ISSUE_NUMBER.search(branch or "")
+    return int(m.group(1)) if m else None
 
 
 def login(item: dict) -> str:

@@ -63,7 +63,7 @@ class Keys(unittest.TestCase):
         self.assertGreater(len(used), 10)
 
     def test_every_error_key_exists(self):
-        src = "".join((ROOT / f).read_text(encoding="utf-8") for f in ("sources.py", "server.py", "config.py"))
+        src = "".join((ROOT / f).read_text(encoding="utf-8") for f in ("sources.py", "server.py", "config.py", "collect.py"))
         used = set(re.findall(r"\"(error\.\w+)\"", src))
         self.assertEqual({k for k in used if k not in EN}, set())
         self.assertGreater(len(used), 10)

@@ -67,6 +67,8 @@
   "error.plugin_load": "प्लगइन {path} लोड नहीं हो सका: {detail}",
   "error.plugin_no_state": "{path} में state(worktree) फ़ंक्शन नहीं है",
   "error.plugin_columns": "{path}: COLUMNS बिना दोहराव वाले कॉलम id (स्ट्रिंग या Column) की खाली न रहने वाली सूची होनी चाहिए",
+  "error.plugin_needs": "{path}: NEEDS में सिर्फ़ \"issue\" और \"last_reply\" हो सकते हैं (मिला {value})",
+  "error.plugin_issue_of": "प्लगइन का issue_of विफल रहा: {detail}",
   "cli.description": "देखें कि आपके कौन-से git worktree और PR आपका इंतज़ार कर रहे हैं",
   "cli.help_serve": "डैशबोर्ड दिखाएँ और समय-समय पर रिफ़्रेश करें",
   "cli.help_status": "मौजूदा स्थिति सिर्फ़ एक बार प्रिंट करें",

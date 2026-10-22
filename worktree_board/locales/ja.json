@@ -67,6 +67,8 @@
   "error.plugin_load": "プラグイン {path} を読み込めなかった: {detail}",
   "error.plugin_no_state": "{path} に state(worktree) の関数が無い",
   "error.plugin_columns": "{path}: COLUMNS は、重ならない列の id（文字列か Column）を 1 つ以上並べる",
+  "error.plugin_needs": "{path}: NEEDS に書けるのは \"issue\" と \"last_reply\" だけ（{value} が書かれている）",
+  "error.plugin_issue_of": "プラグインの issue_of が失敗した: {detail}",
   "cli.description": "自分の worktree と PR のうち、自分の番のものを見る",
   "cli.help_serve": "Dashboard を出して、定期的に見直す",
   "cli.help_status": "今の状態を 1 回だけ表示する",

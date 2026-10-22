@@ -67,6 +67,8 @@
   "error.plugin_load": "Plugin {path} konnte nicht geladen werden: {detail}",
   "error.plugin_no_state": "{path} hat keine Funktion state(worktree)",
   "error.plugin_columns": "{path}: COLUMNS muss eine nicht leere Liste eindeutiger Spalten-IDs sein (Zeichenketten oder Column)",
+  "error.plugin_needs": "{path}: NEEDS darf nur \"issue\" und \"last_reply\" enthalten (gefunden: {value})",
+  "error.plugin_issue_of": "issue_of des Plugins ist fehlgeschlagen: {detail}",
   "cli.description": "Zeigt, welche deiner Git-Worktrees und PRs auf dich warten",
   "cli.help_serve": "Zeigt das Dashboard an und aktualisiert es regelmäßig",
   "cli.help_status": "Gibt den aktuellen Stand einmalig aus",

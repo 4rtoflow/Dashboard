@@ -29,10 +29,13 @@ class Watch:
         self.mergeable: dict[int, str] = {}
 
     def fetch(self) -> tuple[dict | None, dict | None]:
-        """材料とエラーのどちらか。"""
+        """材料とエラーのどちらか。Issue の番号はいつも、Issue の中身はプラグインが頼んだときだけ足す。"""
+        plugin = self.source.plugin or cards.DEFAULT
         try:
             got = self.source.fetch()
-            return {**got, "prs": settle(got["prs"], self.mergeable)}, None
+            numbers = collect.issue_numbers(plugin.issue_of, got)
+            issues = self.source.issues(set(numbers.values())) if "issue" in plugin.needs else {}
+            return {**got, "prs": settle(got["prs"], self.mergeable), "issue_numbers": numbers, "issues": issues}, None
         except FetchError as e:
             return None, e.to_dict()
         except json.JSONDecodeError:
@@ -97,7 +100,8 @@ class Board:
             # 会話は、repo をまたいでいちばん深い worktree に振り分ける（repo の中に別の repo を置いていても二重にしない）
             paths = [p for _, _, g in got for p in [*g["worktrees"].values(), (g.get("primary") or {}).get("path")] if p]
             by_path = agents.assign(found, paths)
-            items = [i for label, plugin, g in got for i in cards.build(plugin, collect.local(label, g, by_path, self.host))]
+            items = [i for label, plugin, g in got
+                     for i in cards.build(plugin, collect.local(label, g, by_path, self.host, plugin.needs))]
             columns = cards.merge_columns([w.source.plugin or cards.DEFAULT for w in self.watches])
             return {"repos": repos, "updated_at": self.updated_at, "checking": self.checking,
                     "columns": [{"id": c.id, "label": c.label} for c in columns], "worktrees": cards.sort(items, columns)}

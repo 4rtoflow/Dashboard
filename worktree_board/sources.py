@@ -8,6 +8,8 @@ from pathlib import Path
 FIELDS = ("number,title,url,headRefName,headRefOid,baseRefName,isDraft,mergeable,"
           "reviews,reviewRequests,statusCheckRollup,updatedAt")
 CLOSED_FIELDS = "number,headRefName,state,title,url,mergedAt,closedAt"
+ISSUE_FIELDS = "number title state stateReason url updatedAt labels(first: 20) { nodes { name } } assignees(first: 10) { nodes { login } }"
+ISSUES_PER_QUERY = 50
 
 
 class FetchError(Exception):
@@ -31,6 +33,31 @@ def run(cmd: list[str], cwd: Path) -> str:
     if r.returncode != 0:
         raise FetchError("error.failed", detail=r.stderr.strip()[:300] or " ".join(cmd[:3]))
     return r.stdout
+
+
+def graphql(query: str, cwd: Path) -> dict:
+    """gh api graphql の data。番号の Issue が無い（NOT_FOUND）だけの誤りなら、取れた分を返す（gh はそのとき終了コード 1 になる）。"""
+    try:
+        r = subprocess.run(["gh", "api", "graphql", "-f", f"query={query}"], cwd=cwd, capture_output=True, text=True, timeout=120)
+    except FileNotFoundError:
+        raise FetchError("error.command_missing", cmd="gh") from None
+    except subprocess.TimeoutExpired:
+        raise FetchError("error.timeout", cmd="gh api graphql") from None
+    try:
+        body = json.loads(r.stdout or "{}")
+    except ValueError:
+        body = {}
+    errors = body.get("errors") or []
+    if body.get("data") is not None and all(e.get("type") == "NOT_FOUND" for e in errors):
+        return body["data"]
+    raise FetchError("error.failed", detail=(r.stderr.strip() or str(errors))[:300] or "gh api graphql")
+
+
+def issue_record(node: dict) -> dict:
+    """GraphQL の Issue を、プラグインに渡す形にする（ラベルは名前、担当はログイン名の並び）。"""
+    return {**{k: node.get(k) for k in ("number", "title", "state", "stateReason", "url", "updatedAt")},
+            "labels": [n["name"] for n in (node.get("labels") or {}).get("nodes") or []],
+            "assignees": [n["login"] for n in (node.get("assignees") or {}).get("nodes") or []]}
 
 
 def parse_worktrees(porcelain: str) -> tuple[str | None, dict[str, str]]:
@@ -87,6 +114,19 @@ class Source:
 
     def gh(self, *args: str) -> str:
         return run(["gh", *args], self.checkout)
+
+    def issues(self, numbers) -> dict[int, dict]:
+        """番号 → Issue。番号が PR だったり、無かったりすれば入れない。ISSUES_PER_QUERY 件ずつ 1 回の問い合わせで取る。"""
+        owner, name = self.repo.split("/", 1)
+        out: dict[int, dict] = {}
+        wanted = sorted(n for n in numbers if isinstance(n, int) and not isinstance(n, bool) and n > 0)
+        for i in range(0, len(wanted), ISSUES_PER_QUERY):
+            fields = " ".join(f"i{n}: issueOrPullRequest(number: {n}) {{ __typename ... on Issue {{ {ISSUE_FIELDS} }} }}"
+                              for n in wanted[i:i + ISSUES_PER_QUERY])
+            repo = graphql(f"query {{ repository(owner: {json.dumps(owner)}, name: {json.dumps(name)}) {{ {fields} }} }}",
+                           self.checkout).get("repository") or {}
+            out.update({node["number"]: issue_record(node) for node in repo.values() if node and node.get("__typename") == "Issue"})
+        return out
 
     def fetch(self) -> dict:
         """worktrees（ブランチ名 → パス）・primary（primary checkout の path と branch）・prs（開いている自分の PR）・

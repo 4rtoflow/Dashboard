@@ -58,6 +58,8 @@ def state(worktree):
 ```
 
 - `None` を返すとカードを出さない。列は `COLUMNS` で決められる（書かなければ既定の列）。
+- `worktree.issue_number` は branch 名の中の番号（`feature/5323-x` なら 5323。`release/2.1` のような版の数は拾わない）。決まりが違えば `issue_of(branch)` を書く。
+- 時間のかかる材料は、`NEEDS` に書いたときだけ取る。`"issue"` で `worktree.issue`（Issue の状態・ラベル・担当など。GitHub の見直しのたびに repo ごとに 1 回で取る）、`"last_reply"` で各会話の `last_reply`（エージェントが最後に書いた返事の文）。
 - 関数が例外を投げたり、知らない列を返したりすると、そのカードだけを先頭の列に「関数が失敗した」と出す。
 - 直したら、起動し直すと反映される。
 
@@ -132,7 +134,7 @@ Claude Code は、開いている会話ごとに `~/.claude/sessions/<プロセ�
 - `127.0.0.1` だけで待ち受ける。`localhost` 以外の名前で来た要求は断る。
 - 書き込みの API（見直しの依頼）は、独自ヘッダーが無ければ断る（ほかのサイトのページから勝手に押されないため）。
 - 記録は何も保存しない（ファイルを作らない）。
-- エージェントの会話は、`~/.claude/sessions/` の JSON を読むだけ。会話の中身（やりとりの記録）は読まず、会話へは何も送らない。
+- エージェントの会話は、`~/.claude/sessions/` の JSON を読むだけで、会話へは何も送らない。会話の中身（やりとりの記録）は、プラグインが `NEEDS` に `"last_reply"` を書いたときだけ、最後の返事を読む。
 
 ## テスト
 
@@ -161,6 +163,7 @@ python3 -m unittest discover -s tests -t .
 | `tests/test_i18n.py` | 全言語のキーと `{名前}` の一致・言語の決め方のテスト |
 | `tests/test_agents.py` | 会話の読み方・振り分け・判定の順・primary checkout のカードのテスト |
 | `tests/test_config.py` | 設定ファイルの誤りの知らせ方・関数の読み込み・関数が失敗したときのテスト |
+| `tests/test_materials.py` | Issue の番号の引き方・Issue と最後の返事を頼まれたときだけ取るテスト |
 
 ## API
 

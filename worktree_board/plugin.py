@@ -17,6 +17,15 @@
 - 例外を投げたり、COLUMNS に無い列を返したりすると、そのカードだけを先頭の列に「関数が失敗した」と出し、ほかは出し続ける。
 - 呼ばれるのは、画面が読み直すたび（10 秒おき）。重い処理や GitHub への書き込みはしない。
 - 同じフォルダのファイルは import できる。直したら、起動し直すと反映される。
+
+時間のかかる材料は、NEEDS に書いたときだけ取る（書かなければ何も取らない）。
+
+    NEEDS = ["issue", "last_reply"]
+    # "issue": worktree.issue に Issue（title・state・labels・assignees など）。GitHub の見直しのたび（60 秒おき）に、repo ごとに 1 回で取る
+    # "last_reply": worktree.sessions の各 Session の last_reply に、エージェントが最後に書いた返事の文。会話の記録を読む
+
+Issue の番号は、branch 名の中の番号（default.issue_of）。決まりが違うなら issue_of(branch) を書いて、番号か None を返す。
+issue_of が失敗すると、その repo の取得の誤りとして画面に出る。
 """
 from . import judge as default
 from .model import Column, Session, Text, Turn, Worktree

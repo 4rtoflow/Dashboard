@@ -67,6 +67,8 @@
   "error.plugin_load": "{path} eklentisi yüklenemedi: {detail}",
   "error.plugin_no_state": "{path} içinde state(worktree) işlevi yok",
   "error.plugin_columns": "{path}: COLUMNS, benzersiz sütun kimliklerinden (dize veya Column) oluşan boş olmayan bir liste olmalı",
+  "error.plugin_needs": "{path}: NEEDS yalnızca \"issue\" ve \"last_reply\" içerebilir (bulunan: {value})",
+  "error.plugin_issue_of": "Eklentinin issue_of işlevi başarısız oldu: {detail}",
   "cli.description": "git worktree'lerinizden ve PR'larınızdan hangilerinin sizi beklediğini görün",
   "cli.help_serve": "Panoyu gösterir ve düzenli aralıklarla yeniler",
   "cli.help_status": "Mevcut durumu bir kez yazdırır",

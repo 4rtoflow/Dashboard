@@ -67,6 +67,8 @@
   "error.plugin_load": "Không thể tải plugin {path}: {detail}",
   "error.plugin_no_state": "{path} không có hàm state(worktree)",
   "error.plugin_columns": "{path}: COLUMNS phải là danh sách không rỗng gồm các id cột không trùng nhau (chuỗi hoặc Column)",
+  "error.plugin_needs": "{path}: NEEDS chỉ được có \"issue\" và \"last_reply\" (đang có {value})",
+  "error.plugin_issue_of": "Hàm issue_of của plugin bị lỗi: {detail}",
   "cli.description": "Xem worktree và PR git nào của bạn đang chờ bạn xử lý",
   "cli.help_serve": "Hiển thị bảng điều khiển và làm mới định kỳ",
   "cli.help_status": "In trạng thái hiện tại một lần",

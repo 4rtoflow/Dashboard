@@ -8,12 +8,18 @@ from . import judge
 from .model import Column, Text, Turn, Worktree
 
 
+NEEDS = frozenset({"issue", "last_reply"})  # プラグインが頼める、時間のかかる材料
+
+
 @dataclass(frozen=True)
 class Plugin:
-    """repo に結び付いた状態を決める関数と、その列の並び。origin は読み込んだファイル（既定の判定なら None）。"""
+    """repo に結び付いた状態を決める関数と、その列の並び。origin は読み込んだファイル（既定の判定なら None）。
+    needs は取ってほしい時間のかかる材料（NEEDS のうち）、issue_of は branch 名から Issue の番号を引く関数。"""
     state: Callable[[Worktree], Turn | None]
     columns: tuple[Column, ...]
     origin: str | None = None
+    needs: frozenset[str] = frozenset()
+    issue_of: Callable[[str | None], int | None] = judge.issue_of
 
 
 DEFAULT = Plugin(judge.state, tuple(Column(c) for c in judge.COLUMNS))
@@ -52,10 +58,11 @@ def card(wt: Worktree, t: Turn) -> dict:
     return {
         "id": f"{wt.host}:{wt.repo}:{wt.name}", "host": wt.host, "repo": wt.repo,
         "label": wt.name if wt.path else f"PR #{shown['number']}", "path": wt.path, "branch": wt.branch,
-        "primary": wt.primary, "title": shown.get("title") or wt.branch or wt.name,
+        "primary": wt.primary, "title": shown.get("title") or wt.branch or wt.name, "issue": wt.issue_number,
         "pr": shown.get("number"), "url": shown.get("url"), "updated_at": (wt.pr or {}).get("updatedAt"),
         "state": t.column, "reason": message(t.reason), "next": message(t.next),
-        "badges": [message(b) for b in t.badges], "agents": [asdict(s) for s in wt.sessions],
+        "badges": [message(b) for b in t.badges],
+        "agents": [{k: v for k, v in asdict(s).items() if k != "last_reply"} for s in wt.sessions],  # 返事の全文は画面に要らない
     }
 
 

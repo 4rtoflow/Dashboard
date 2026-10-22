@@ -67,6 +67,8 @@
   "error.plugin_load": "無法載入外掛 {path}：{detail}",
   "error.plugin_no_state": "{path} 中沒有 state(worktree) 函式",
   "error.plugin_columns": "{path}：COLUMNS 必須是由不重複的欄位 id（字串或 Column）組成的非空清單",
+  "error.plugin_needs": "{path}：NEEDS 只能列出 \"issue\" 與 \"last_reply\"（目前為 {value}）",
+  "error.plugin_issue_of": "外掛的 issue_of 發生錯誤：{detail}",
   "cli.description": "查看你的 git worktree 與 PR 中輪到你處理的部分",
   "cli.help_serve": "顯示儀表板並定期重新整理",
   "cli.help_status": "只列印一次目前狀態",

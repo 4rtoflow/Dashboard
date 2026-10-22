@@ -67,6 +67,8 @@
   "error.plugin_load": "Impossible de charger le plugin {path} : {detail}",
   "error.plugin_no_state": "{path} n'a pas de fonction state(worktree)",
   "error.plugin_columns": "{path} : COLUMNS doit être une liste non vide d'identifiants de colonne distincts (chaînes ou Column)",
+  "error.plugin_needs": "{path} : NEEDS ne peut contenir que \"issue\" et \"last_reply\" (trouvé : {value})",
+  "error.plugin_issue_of": "La fonction issue_of du plugin a échoué : {detail}",
   "cli.description": "Voir lesquels de vos worktrees et PR git attendent quelque chose de vous",
   "cli.help_serve": "Afficher le tableau de bord et l'actualiser périodiquement",
   "cli.help_status": "Afficher une seule fois l'état actuel",

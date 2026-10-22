@@ -67,6 +67,8 @@
   "error.plugin_load": "플러그인 {path}을(를) 불러올 수 없습니다: {detail}",
   "error.plugin_no_state": "{path}에 state(worktree) 함수가 없습니다",
   "error.plugin_columns": "{path}: COLUMNS는 겹치지 않는 열 id(문자열 또는 Column)를 하나 이상 나열해야 합니다",
+  "error.plugin_needs": "{path}: NEEDS에는 \"issue\"와 \"last_reply\"만 쓸 수 있습니다 (현재 {value})",
+  "error.plugin_issue_of": "플러그인의 issue_of가 실패함: {detail}",
   "cli.description": "내 git worktree와 PR 중 내가 처리할 차례인 것을 확인합니다",
   "cli.help_serve": "대시보드를 표시하고 주기적으로 새로고침합니다",
   "cli.help_status": "현재 상태를 한 번만 출력합니다",

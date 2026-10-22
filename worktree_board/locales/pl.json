@@ -67,6 +67,8 @@
   "error.plugin_load": "Nie udało się wczytać wtyczki {path}: {detail}",
   "error.plugin_no_state": "{path} nie ma funkcji state(worktree)",
   "error.plugin_columns": "{path}: COLUMNS musi być niepustą listą unikalnych id kolumn (napisów lub Column)",
+  "error.plugin_needs": "{path}: NEEDS może zawierać tylko \"issue\" i \"last_reply\" (jest {value})",
+  "error.plugin_issue_of": "Funkcja issue_of wtyczki zawiodła: {detail}",
   "cli.description": "Sprawdź, które z Twoich worktree i PR-ów czekają na Ciebie",
   "cli.help_serve": "Pokaż panel i odświeżaj go cyklicznie",
   "cli.help_status": "Wypisz bieżący stan jednorazowo",

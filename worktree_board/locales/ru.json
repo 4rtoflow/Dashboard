@@ -67,6 +67,8 @@
   "error.plugin_load": "Не удалось загрузить плагин {path}: {detail}",
   "error.plugin_no_state": "В {path} нет функции state(worktree)",
   "error.plugin_columns": "{path}: COLUMNS должен быть непустым списком неповторяющихся id столбцов (строк или Column)",
+  "error.plugin_needs": "{path}: в NEEDS можно указать только \"issue\" и \"last_reply\" (указано {value})",
+  "error.plugin_issue_of": "Функция issue_of плагина завершилась ошибкой: {detail}",
   "cli.description": "Показывает, какие из ваших git worktree и PR ждут вас",
   "cli.help_serve": "Показать панель и периодически обновлять её",
   "cli.help_status": "Один раз вывести текущее состояние",

@@ -67,6 +67,8 @@
   "error.plugin_load": "无法加载插件 {path}：{detail}",
   "error.plugin_no_state": "{path} 中没有 state(worktree) 函数",
   "error.plugin_columns": "{path}：COLUMNS 必须是由不重复的列 id（字符串或 Column）组成的非空列表",
+  "error.plugin_needs": "{path}：NEEDS 只能列出 \"issue\" 和 \"last_reply\"（当前为 {value}）",
+  "error.plugin_issue_of": "插件的 issue_of 出错：{detail}",
   "cli.description": "查看你的 git worktree 和 PR 中轮到你处理的部分",
   "cli.help_serve": "显示仪表盘并定期刷新",
   "cli.help_status": "只打印一次当前状态",

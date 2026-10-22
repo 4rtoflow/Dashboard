@@ -67,6 +67,8 @@
   "error.plugin_load": "Tidak dapat memuat plugin {path}: {detail}",
   "error.plugin_no_state": "{path} tidak punya fungsi state(worktree)",
   "error.plugin_columns": "{path}: COLUMNS harus berupa daftar tidak kosong berisi id kolom yang unik (string atau Column)",
+  "error.plugin_needs": "{path}: NEEDS hanya boleh berisi \"issue\" dan \"last_reply\" (ada {value})",
+  "error.plugin_issue_of": "issue_of milik plugin gagal: {detail}",
   "cli.description": "Lihat worktree dan PR git milikmu yang sedang menunggu tindakanmu",
   "cli.help_serve": "Tampilkan dasbor dan segarkan secara berkala",
   "cli.help_status": "Cetak status saat ini satu kali saja",
