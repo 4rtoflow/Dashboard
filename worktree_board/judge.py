@@ -1,7 +1,8 @@
 """worktree と PR から、カードの状態を決める。副作用は無く、テストはここを見る。
 
 状態は上から順に当てはめて決める（先に当たった規則が勝つ）。
-  自分でしか動かせないもの（コンフリクト・CI の失敗・変更の要求）を先に、
+  エージェントの会話の様子（人の答えを待っている・作業している）を PR より先に、
+  自分でしか動かせないもの（コンフリクト・CI の失敗・変更の要求）を次に、
   自動で進むもの（CI の実行中）を次に、そのあとに人を待つもの（Draft・レビュー）を見る。
 文章は持たない。理由・次にすること・印は翻訳のキー（locales/*.json）と引数で返し、画面と CLI が自分の言語に直す。
 """
@@ -10,7 +11,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-STATES = ["mine", "github", "review", "done"]  # 画面の列の順
+STATES = ["mine", "agent", "github", "review", "done"]  # 画面の列の順
 FAILED = {"FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ACTION_REQUIRED", "ERROR"}
 
 
@@ -85,8 +86,26 @@ def turn(state: str, reason: str, next_step: str, **args) -> dict:
     return {"state": state, "reason": {"key": f"reason.{reason}", "args": args}, "next": f"next.{next_step}"}
 
 
-def judge(pr: dict | None, closed: dict | None, me: str) -> dict:
-    """1 つの worktree の状態。pr は開いている PR、closed は同じブランチの閉じた PR（どちらも無ければ PR がまだ無い）。"""
+def agent_turn(agents: list[dict]) -> dict | None:
+    """worktree の中のエージェントの会話から決まる状態。人の答えを待つ会話を、作業している会話より先に見る
+    （同じ worktree でほかの会話が動いていても、答えるまで進まない）。どちらも無ければ None。"""
+    for a in agents:
+        if a["status"] == "waiting":
+            if a.get("waiting_for"):
+                return turn("mine", "agent_waiting_for", "answer_agent", agent=a["agent"], what=a["waiting_for"])
+            return turn("mine", "agent_waiting", "answer_agent", agent=a["agent"])
+    for a in agents:
+        if a["status"] == "working":
+            return turn("agent", "agent_working", "wait", agent=a["agent"])
+    return None
+
+
+def judge(pr: dict | None, closed: dict | None, me: str, agents: list[dict] = ()) -> dict:
+    """1 つの worktree の状態。pr は開いている PR、closed は同じブランチの閉じた PR（どちらも無ければ PR がまだ無い）。
+    agents はその worktree で開いているエージェントの会話。PR がマージされた後でも、会話が答えを待っていれば先に出す。"""
+    by_agent = agent_turn(list(agents))
+    if by_agent:
+        return by_agent
     if pr is None and closed:
         return turn("done", "merged" if closed.get("state") == "MERGED" else "closed", "cleanup", n=closed["number"])
     if pr is None:
@@ -111,11 +130,11 @@ def judge(pr: dict | None, closed: dict | None, me: str) -> dict:
     return turn("review", "review_waiting", "wait")
 
 
-def badges(pr: dict | None, closed: dict | None, path: str | None) -> list[str]:
+def badges(pr: dict | None, closed: dict | None, path: str | None, primary: bool = False) -> list[str]:
     out = []
     if pr and pr.get("isDraft"):
         out.append("badge.draft")
-    if not pr and not closed:
+    if not pr and not closed and not primary:  # primary checkout は PR を作らずに使う場所なので、PR が無くても印を付けない
         out.append("badge.no_pr")
     if not path:
         out.append("badge.no_worktree")
@@ -128,22 +147,30 @@ def sort_items(items: list[dict]) -> list[dict]:
 
 
 def build_items(worktrees: dict[str, str], prs: list[dict], closed: dict[str, dict], me: str,
-                repo: str = "") -> list[dict]:
+                repo: str = "", primary: dict | None = None, agents: dict[str, list[dict]] | None = None) -> list[dict]:
     """1 つの repo のカードの一覧。worktrees はブランチ名 → パス、closed はブランチ名 → 閉じた PR。
-    worktree の無い開いた PR も 1 枚にする。repo はカードに付ける repo の名前。"""
+    worktree の無い開いた PR も 1 枚にする。repo はカードに付ける repo の名前。
+    agents はパス → そこで開いているエージェントの会話。primary（primary checkout の path と branch）は、
+    そこでエージェントが作業しているか答えを待っているときだけ 1 枚にする（main で直接作業していても見落とさない）。"""
+    agents = agents or {}
     open_by_branch = {p["headRefName"]: p for p in prs}
-    rows = [(Path(path).name, path, branch) for branch, path in worktrees.items()]
-    rows += [(f"pr-{p['number']}", None, b) for b, p in open_by_branch.items() if b not in worktrees]
+    trees = [(branch, path, False) for branch, path in worktrees.items()]
+    if primary and primary.get("path") and agent_turn(agents.get(primary["path"], [])):
+        trees.append((primary.get("branch"), primary["path"], True))
+    rows = [(Path(path).name, path, branch, main) for branch, path, main in trees]
+    rows += [(f"pr-{p['number']}", None, b, False) for b, p in open_by_branch.items() if b not in {t[0] for t in trees}]
     items = []
-    for name, path, branch in rows:
+    for name, path, branch, main in rows:
         pr = open_by_branch.get(branch)
         done = None if pr else closed.get(branch)
         shown = pr or done or {}
+        found = agents.get(path, []) if path else []
         items.append({
-            **judge(pr, done, me),
+            **judge(pr, done, me, found),
             "id": f"{repo}:{name}", "repo": repo, "label": name if path else f"PR #{shown['number']}",
-            "path": path, "branch": branch, "title": shown.get("title") or branch,
+            "path": path, "branch": branch, "title": shown.get("title") or branch or name,
             "pr": shown.get("number"), "url": shown.get("url"), "updated_at": (pr or {}).get("updatedAt"),
-            "badges": badges(pr, done, path),
+            "badges": badges(pr, done, path, main), "primary": main,
+            "agents": [{k: a.get(k) for k in ("agent", "status", "waiting_for", "since")} for a in found],
         })
     return sort_items(items)

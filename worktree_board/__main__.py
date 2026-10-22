@@ -28,7 +28,10 @@ def status(board: Board, msgs: dict) -> int:
         if rows:
             print(i18n.fmt(msgs, "ui.column_label", {"state": i18n.fmt(msgs, f"state.{state}"), "n": len(rows)}))
             for i in rows:
-                marks = f"  [{' / '.join(i18n.fmt(msgs, b) for b in i['badges'])}]" if i["badges"] else ""
+                # 作業中・答え待ちは理由に出るので、印には返事を終えた（指示待ちの）会話だけを、エージェントごとに 1 つ足す
+                idle = dict.fromkeys(a["agent"] for a in i["agents"] if a["status"] == "idle")
+                chips = [i18n.fmt(msgs, b) for b in i["badges"]] + [i18n.fmt(msgs, "agent.idle", {"agent": a}) for a in idle]
+                marks = f"  [{' / '.join(chips)}]" if chips else ""
                 where = f"{i['repo']}  " if several else ""
                 print(f"  {where}{i['label']}  {i18n.fmt(msgs, i['reason']['key'], i['reason']['args'])}{marks}")
     return 1 if board.errors() else 0

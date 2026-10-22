@@ -46,6 +46,8 @@ class Keys(unittest.TestCase):
                       {"reviews": [{"author": {"login": "a"}, "state": "CHANGES_REQUESTED", "commit": {"oid": "h"}, "submittedAt": "1"}]},
                       {"reviews": [{"author": {"login": "a"}, "state": "CHANGES_REQUESTED", "commit": {"oid": "old"}, "submittedAt": "1"}]}):
             results.append(judge({**pr, **extra}, None, "me"))
+        for status, what in (("waiting", None), ("waiting", "input needed"), ("working", None)):
+            results.append(judge(None, None, "me", [{"agent": "Claude Code", "status": status, "waiting_for": what}]))
         keys = {r["reason"]["key"] for r in results} | {r["next"] for r in results}
         keys |= set(badges({**pr, "isDraft": True}, None, None)) | set(badges(None, None, None))
         keys |= {f"state.{s}" for s in STATES}

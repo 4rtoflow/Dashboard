@@ -11,7 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from . import i18n
+from . import agents, i18n
 from .judge import STATES, build_items, settle, sort_items
 from .sources import FetchError
 
@@ -42,11 +42,13 @@ class Watch:
 
 
 class Board:
-    """見直しのたびに、どの repo の材料も取り直す。取れなかった repo は、前の材料を残してエラーを出す。"""
+    """見直しのたびに、どの repo の材料も取り直す。取れなかった repo は、前の材料を残してエラーを出す。
+    エージェントの会話は手元のファイルを読むだけなので、見直しを待たずに、カードを出すたびに読み直す。"""
 
-    def __init__(self, sources, interval: int = 60):
+    def __init__(self, sources, interval: int = 60, sessions=agents.sessions):
         self.watches = [Watch(s) for s in sources]
         self.interval = interval
+        self.sessions = sessions
         self.mu = threading.Lock()
         self.wake = threading.Event()
         self.updated_at: str | None = None  # どれかの repo が取れた最後の時刻
@@ -86,10 +88,15 @@ class Board:
                 pass
 
     def view(self) -> dict:
+        found = self.sessions()
         with self.mu:
             repos = [{"repo": w.source.label, "error": w.error} for w in self.watches]
-            items = [i for w in self.watches if w.got
-                     for i in build_items(w.got["worktrees"], w.got["prs"], w.got["closed"], w.got["me"], w.source.label)]
+            got = [(w.source.label, w.got) for w in self.watches if w.got]
+            # 会話は、repo をまたいでいちばん深い worktree に振り分ける（repo の中に別の repo を置いていても二重にしない）
+            paths = [p for _, g in got for p in [*g["worktrees"].values(), (g.get("primary") or {}).get("path")] if p]
+            by_path = agents.assign(found, paths)
+            items = [i for label, g in got
+                     for i in build_items(g["worktrees"], g["prs"], g["closed"], g["me"], label, g.get("primary"), by_path)]
             return {"repos": repos, "updated_at": self.updated_at, "checking": self.checking,
                     "states": STATES, "worktrees": sort_items(items)}
 

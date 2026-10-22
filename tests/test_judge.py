@@ -17,6 +17,7 @@ from worktree_board.server import Board, Handler
 from worktree_board.sources import FetchError, discover, parse_worktrees
 
 ME = "me"
+NO_SESSIONS = lambda: []  # 手元の本物の会話を読まない
 
 
 def pr(**kw) -> dict:
@@ -152,7 +153,7 @@ class FakeSource:
 class BoardAndServer(unittest.TestCase):
     def test_failed_fetch_keeps_previous_items(self):
         src = FakeSource({"worktrees": {}, "prs": [pr()], "closed": {}, "me": ME})
-        board = Board([src])
+        board = Board([src], sessions=NO_SESSIONS)
         board.tick()
         self.assertEqual(len(board.view()["worktrees"]), 1)
         src.error = FetchError("error.failed", detail="boom")
@@ -164,7 +165,7 @@ class BoardAndServer(unittest.TestCase):
     def test_repos_are_fetched_and_fail_separately(self):
         a = FakeSource({"worktrees": {}, "prs": [pr(updatedAt="2026-01-02T00:00:00Z")], "closed": {}, "me": ME}, repo="o/a")
         b = FakeSource({"worktrees": {}, "prs": [pr(updatedAt="2026-01-01T00:00:00Z")], "closed": {}, "me": ME}, repo="o/b")
-        board = Board([a, b])
+        board = Board([a, b], sessions=NO_SESSIONS)
         board.tick()
         v = board.view()
         # 同じ PR 番号・同じブランチでも repo が違えば別のカード。repo をまたいで、長く動いていないものが上
@@ -183,7 +184,7 @@ class BoardAndServer(unittest.TestCase):
         self.assertEqual(len(board.errors()), 2)
 
     def serve(self):
-        board = Board([FakeSource({"worktrees": {}, "prs": [pr()], "closed": {}, "me": ME})])
+        board = Board([FakeSource({"worktrees": {}, "prs": [pr()], "closed": {}, "me": ME})], sessions=NO_SESSIONS)
         board.tick()
         Handler.board = board
         server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)

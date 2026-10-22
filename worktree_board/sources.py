@@ -91,7 +91,8 @@ class Source:
         return run(["gh", *args], self.checkout)
 
     def fetch(self) -> dict:
-        """worktrees（ブランチ名 → パス）・prs（開いている自分の PR）・closed（ブランチ名 → 閉じた自分の PR）・me を返す。"""
+        """worktrees（ブランチ名 → パス）・primary（primary checkout の path と branch）・prs（開いている自分の PR）・
+        closed（ブランチ名 → 閉じた自分の PR）・me を返す。"""
         self.repo = self.repo or self.gh("repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner").strip()
         self.me = self.me or self.gh("api", "user", "--jq", ".login").strip()
         primary, branches = parse_worktrees(run(["git", "worktree", "list", "--porcelain"], self.checkout))
@@ -101,4 +102,6 @@ class Source:
         rows = json.loads(self.gh("pr", "list", "--repo", self.repo, "--author", "@me", "--state", "closed",
                                   "--limit", "100", "--json", CLOSED_FIELDS))
         closed = {r["headRefName"]: r for r in sorted(rows, key=lambda r: r["number"])}  # 同じブランチは新しいほう
-        return {"worktrees": worktrees, "prs": prs, "closed": closed, "me": self.me}
+        main = next((b for b, p in branches.items() if p == primary), None)  # detached なら None
+        return {"worktrees": worktrees, "primary": {"path": primary, "branch": main},
+                "prs": prs, "closed": closed, "me": self.me}
