@@ -1,0 +1,6 @@
+# CI の中だけで使う道具の版。Dashboard を動かすのには要らない。
+# pip install -c .github/ci-requirements.txt <名前> で、この版に固定して入れる
+coverage==7.16.2
+mypy==2.4.0
+playwright==1.63.0
+ruff==0.17.0

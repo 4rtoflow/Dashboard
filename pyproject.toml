@@ -1,0 +1,32 @@
+# CI の中だけで使う検査（ruff・mypy・coverage）の設定。Dashboard は Python の標準ライブラリだけで動き、これらの道具は要らない。
+
+[tool.ruff]
+target-version = "py311"
+line-length = 160
+
+[tool.ruff.lint]
+# 誤りを拾う規則（pyflakes・pycodestyle・bugbear）と、import の並び・古い書き方
+select = ["F", "E", "W", "B", "I", "UP"]
+ignore = [
+  "E731",   # 短い関数は lambda で名前に入れてよい
+  "UP017",  # datetime.timezone.utc のままでよい
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["worktree_board"]
+
+[tool.ruff.lint.per-file-ignores]
+"worktree_board/__main__.py" = ["UP036"]  # 3.11 より古い Python で動かされたときに、その旨を出すための確かめ
+
+[tool.mypy]
+python_version = "3.11"
+files = ["worktree_board", "examples"]
+check_untyped_defs = true
+
+[tool.coverage.run]
+branch = true
+source = ["worktree_board", "examples"]
+
+[tool.coverage.report]
+fail_under = 88
+show_missing = true
