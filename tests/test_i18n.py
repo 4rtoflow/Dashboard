@@ -30,7 +30,7 @@ class Catalogs(unittest.TestCase):
                 self.assertEqual(set(HOLES.findall(text)), set(HOLES.findall(EN[key])), f"{code} {key}")
 
     def test_only_arabic_is_right_to_left(self):
-        self.assertEqual({l["code"] for l in i18n.languages() if l["dir"] == "rtl"}, {"ar"})
+        self.assertEqual({lang["code"] for lang in i18n.languages() if lang["dir"] == "rtl"}, {"ar"})
 
 
 class Keys(unittest.TestCase):

@@ -1,12 +1,11 @@
 """worktree ごとに、その repo に結び付いた状態を決める関数を呼び、画面と端末に出すカードにする。"""
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from typing import Callable
 
 from . import judge
 from .model import Column, Text, Turn, Worktree
-
 
 NEEDS = frozenset({"issue", "last_reply"})  # プラグインが頼める、時間のかかる材料
 

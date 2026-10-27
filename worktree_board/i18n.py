@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 LOCALES = Path(__file__).with_name("locales")
@@ -18,7 +18,7 @@ def available() -> list[str]:
     return sorted(p.stem for p in LOCALES.glob("*.json"))
 
 
-@lru_cache(maxsize=None)
+@cache
 def _read(code: str) -> dict:
     return json.loads((LOCALES / f"{code}.json").read_text(encoding="utf-8"))
 

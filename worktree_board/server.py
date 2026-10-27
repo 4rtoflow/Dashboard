@@ -67,7 +67,7 @@ class Board:
         finally:
             self.checking = False
         with self.mu:
-            for w, (got, error) in zip(self.watches, results):
+            for w, (got, error) in zip(self.watches, results, strict=True):
                 if error is None:
                     w.got = got
                 w.error = error
