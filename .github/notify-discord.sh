@@ -13,17 +13,24 @@ fi
 
 payload=$(jq -cn --argjson needs "$NEEDS" --arg url "$RUN_URL" --arg event "$EVENT" --arg sha "${SHA:0:7}" --arg repo "$REPO" '
   ($needs | to_entries) as $jobs
-  | ([$jobs[] | select(.value.result != "success")] | length) as $bad
+  | [$jobs[] | select(.value.result != "success")] as $bad
+  | {failure: "失敗", cancelled: "中止", skipped: "未実行"} as $word
   | {
       allowed_mentions: {parse: []},
       embeds: [{
-        title: ((if $bad == 0 then "✅ CI が通った" else "❌ CI が落ちた" end) + ": " + $repo),
+        # 結果は色の帯と題で見せる。通ったときはジョブを並べず、通らなかったときだけ、そのジョブを書く
+        author: {name: $repo, url: ("https://github.com/" + $repo)},
+        title: (if $bad == [] then "CI 成功" else "CI 失敗" end),
         url: $url,
-        color: (if $bad == 0 then 3066993 else 15158332 end),
-        description: ([$jobs[] | (if .value.result == "success" then "✅" elif .value.result == "skipped" then "⏭️" else "❌" end)
-                       + " `" + .key + "` " + .value.result] | join("\n")),
+        color: (if $bad == [] then 5763719 else 15548997 end),
+        description: (if $bad == []
+                      then "\($jobs | length) 個のジョブがすべて通りました。"
+                      else "\($jobs | length) 個のジョブのうち \($bad | length) 個が通りませんでした。\n\n"
+                           + ([$bad[] | "**\(.key)**　\($word[.value.result] // .value.result)"] | join("\n"))
+                      end),
         footer: {text: ((if $event == "schedule" then "定期実行" elif $event == "workflow_dispatch" then "手動実行" else $event end)
-                        + " · " + $sha)}
+                        + " · " + $sha)},
+        timestamp: (now | todate)
       }]
     }')
 
