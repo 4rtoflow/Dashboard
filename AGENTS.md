@@ -142,12 +142,36 @@ print(state(wt))
 
 ## 3. テンプレートを直す
 
-- テスト: リポジトリの直下で `python3 -m unittest discover -s tests -t .`。直したら全部通してから終える。
-- Python 3.11 以上の標準ライブラリだけを使う。画面（`dashboard.html`）は外から何も読み込まない。
+- テスト: リポジトリの直下で `python3 -m unittest discover -s tests -t .`。直したら全部通してから終える。判定や画面を変えたら、下の「CI」の `e2e/` も流す。
+- Python 3.11 以上の標準ライブラリだけを使う。画面（`dashboard.html`）は外から何も読み込まない。CI の中だけで使う道具は別（下の「CI」）。
 - 文言は `worktree_board/locales/<コード>.json`（21 言語）。既定の判定と画面は文章を持たず、翻訳のキーと引数を返す。キーを足したら 21 言語すべてに同じキーを足す（`tests/test_i18n.py` が見る）。言語を足すときは `en.json` を写して `_name`・`_dir` を決め、`{名前}` は残して訳す。
 - `worktree_board/plugin.py` に出しているものは、使う人のプラグインが頼っている。名前や形を変えるなら、古い形も動くようにする。`examples/` を直したら `tests/test_examples.py` も合わせる。
 - 動きを変えたら、この文書と README も同じ変更の中で直す。README は短く保ち、詳しい説明はこの文書に書く。
 - 関数に渡す `Worktree` はただのデータに保つ（関数の中から手元の PC に問い合わせない）。別の PC から届いた worktree も同じ関数で判定できるようにするため。
+
+### CI
+
+`.github/workflows/ci.yml` が、main への push と PR のたびに次を流す。ruff・mypy・coverage・Playwright は CI の中だけで使う道具で、版は `.github/ci-requirements.txt` に固定している（Dashboard を動かすのには要らない）。
+
+| ジョブ | 確かめること |
+|---|---|
+| `test` | `tests/` を Ubuntu・macOS と Python 3.11〜3.14 で流す |
+| `old-python` | macOS に付いている Python 3.9 で打っても、版が足りないと出して止まる |
+| `lint` | ruff（誤りを拾う規則と import の並び）・mypy（`worktree_board/`・`examples/` の型）・actionlint（CI の設定） |
+| `coverage` | `tests/` のカバレッジが、`pyproject.toml` の `fail_under` を下回らない |
+| `e2e` | `e2e/` で画面を Chromium で開き、カードの列・21 言語の文・画面の色・スマホの幅・見直しのボタン・外のサイトへ要求しないこと・ほかのサイトのページから API を使えないことを見る |
+
+手元で同じものを流すときは、リポジトリの外に venv を作って道具を入れる。
+
+```bash
+python3 -m venv /tmp/wb-ci && /tmp/wb-ci/bin/pip install -c .github/ci-requirements.txt ruff mypy coverage playwright
+/tmp/wb-ci/bin/ruff check . && /tmp/wb-ci/bin/mypy
+/tmp/wb-ci/bin/coverage run -m unittest discover -s tests -t . && /tmp/wb-ci/bin/coverage report
+/tmp/wb-ci/bin/playwright install chromium && /tmp/wb-ci/bin/python -m unittest discover -s e2e -t .
+```
+
+- Playwright が無いと、`e2e/` は飛ばされる（CI では飛ばさずに落ちる）。
+- カバレッジが上がったら `fail_under` を上げてよい。下げるのは、コードを消して分母が変わったときだけにする。
 
 ### 構成
 
