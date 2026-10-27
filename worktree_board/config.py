@@ -96,6 +96,8 @@ def load_plugin(file: Path, index: int) -> Plugin:
     if folder not in sys.path:
         sys.path.insert(0, folder)
     spec = importlib.util.spec_from_file_location(f"worktree_board_plugin_{index}_{file.stem}", file)
+    if spec is None or spec.loader is None:  # 名前が .py で終わらないと、Python のファイルとして読み込めない
+        raise ConfigError("error.plugin_load", path=str(file), detail="not a .py file")
     module = importlib.util.module_from_spec(spec)
     try:
         spec.loader.exec_module(module)

@@ -82,6 +82,9 @@ class Plugins(Files):
 
     def test_load_errors_say_which_file_and_line(self):
         self.assertEqual(self.error('[[repos]]\npath = "a"\nplugin = "nope.py"\n')[0], "error.plugin_missing")
+        self.write("state.txt", "def state(wt):\n    return None\n")
+        key, args = self.error('[[repos]]\npath = "a"\nplugin = "state.txt"\n')
+        self.assertEqual((key, args["detail"]), ("error.plugin_load", "not a .py file"))
         self.write("syntax.py", "def state(wt)\n    return None\n")
         key, args = self.error('[[repos]]\npath = "a"\nplugin = "syntax.py"\n')
         self.assertEqual((key, args["path"]), ("error.plugin_load", str(self.root / "syntax.py")))
