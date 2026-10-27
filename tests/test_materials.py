@@ -186,6 +186,11 @@ class Needs(unittest.TestCase):
                 self.load(f"NEEDS = {bad}\ndef state(wt):\n    return None\n")
             self.assertEqual(e.exception.key, "error.plugin_needs", bad)
 
+    def test_plugin_can_use_dataclass(self):
+        body = ("from __future__ import annotations\nfrom dataclasses import dataclass\n\n@dataclass\nclass Got:\n    n: int = 1\n\n"
+                "def fetch(repo, prs):\n    return Got()\n\ndef state(wt):\n    return None\n")
+        self.assertEqual(self.load(body).fetch("o/r", []).n, 1)
+
     def test_fetch_is_read(self):
         self.assertEqual(self.load("def fetch(repo, prs):\n    return repo\ndef state(wt):\n    return None\n").fetch("o/r", []), "o/r")
         self.assertIsNone(self.load("def state(wt):\n    return None\n").fetch)

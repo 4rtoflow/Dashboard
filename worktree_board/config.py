@@ -99,9 +99,12 @@ def load_plugin(file: Path, index: int) -> Plugin:
     if spec is None or spec.loader is None:  # 名前が .py で終わらないと、Python のファイルとして読み込めない
         raise ConfigError("error.plugin_load", path=str(file), detail="not a .py file")
     module = importlib.util.module_from_spec(spec)
+    # 実行の前に登録する。dataclass などは、実行中に sys.modules から自分のモジュールを引く
+    sys.modules[spec.name] = module
     try:
         spec.loader.exec_module(module)
     except Exception as e:  # 自作のファイルの誤りは、どのファイルの何行目かを出す
+        del sys.modules[spec.name]
         frame = next((f for f in reversed(traceback.extract_tb(e.__traceback__)) if f.filename == str(file)), None)
         line = frame.lineno if frame else getattr(e, "lineno", None)  # 構文の誤りは、frame でなく e.lineno に行がある
         at = f"line {line}: " if line else ""
