@@ -66,6 +66,7 @@ jobs:
       - run: mypy
       # この設定ファイル自体（中のシェルの書き方も shellcheck で見る）
       - run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 -color
+      - run: shellcheck .github/notify-discord.sh
 
   coverage:
     runs-on: ubuntu-latest
@@ -93,3 +94,22 @@ jobs:
       - run: pip install -c .github/ci-requirements.txt playwright
       - run: python -m playwright install --with-deps chromium
       - run: python -m unittest discover -s e2e -t . -v
+
+  notify:
+    # 結果を Discord に送る。送り先は secret の DISCORD_WEBHOOK_URL（無ければ送らない）。
+    # フォーラムの投稿に送るなら、その ID を variable の DISCORD_THREAD_ID に入れる
+    needs: [test, old-python, lint, coverage, e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - run: bash .github/notify-discord.sh
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_THREAD_ID: ${{ vars.DISCORD_THREAD_ID }}
+          NEEDS: ${{ toJSON(needs) }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT: ${{ github.event_name }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}

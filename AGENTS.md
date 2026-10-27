@@ -160,6 +160,10 @@ print(state(wt))
 | `lint` | ruff（誤りを拾う規則と import の並び）・mypy（`worktree_board/`・`examples/` の型）・actionlint（CI の設定） |
 | `coverage` | `tests/` のカバレッジが、`pyproject.toml` の `fail_under` を下回らない |
 | `e2e` | `e2e/` で画面を Chromium で開き、カードの列・21 言語の文・画面の色・スマホの幅・見直しのボタン・外のサイトへ要求しないこと・ほかのサイトのページから API を使えないことを見る |
+| `notify` | 上のジョブの結果を、Discord の webhook に 1 件の投稿として送る（`.github/notify-discord.sh`） |
+
+結果を Discord に送るには、送りたいチャンネルの設定の「連携サービス」で webhook を作り、その URL を repo の secret `DISCORD_WEBHOOK_URL` に入れる（`gh secret set DISCORD_WEBHOOK_URL`）。
+フォーラムの中の 1 つの投稿に送るなら、その投稿の ID を repo の variable `DISCORD_THREAD_ID` に入れる。secret が無ければ送らずに通る（fork など）。
 
 手元で同じものを流すときは、リポジトリの外に venv を作って道具を入れる。
 
