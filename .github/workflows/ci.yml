@@ -2,9 +2,11 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  # 毎日 9:23（日本時間）。安定したら週 1 回にする（毎週月曜なら "23 0 * * 1"）。
+  # 定期実行は main だけで走り、repo に 60 日動きが無いと GitHub が止める
+  schedule:
+    - cron: "23 0 * * *"
+  # 試すとき（Actions の画面の Run workflow か、gh workflow run ci.yml）
   workflow_dispatch:
 
 permissions:

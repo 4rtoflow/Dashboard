@@ -151,7 +151,7 @@ print(state(wt))
 
 ### CI
 
-`.github/workflows/ci.yml` が、main への push と PR のたびに次を流す。ruff・mypy・coverage・Playwright は CI の中だけで使う道具で、版は `.github/ci-requirements.txt` に固定している（Dashboard を動かすのには要らない）。
+`.github/workflows/ci.yml` が、毎日 1 回（日本時間 9:23）と手で起動したとき（`gh workflow run ci.yml`）に次を流す。push や PR では走らない。ruff・mypy・coverage・Playwright は CI の中だけで使う道具で、版は `.github/ci-requirements.txt` に固定している（Dashboard を動かすのには要らない）。
 
 | ジョブ | 確かめること |
 |---|---|
