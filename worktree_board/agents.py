@@ -17,7 +17,7 @@ CLAUDE = "Claude Code"
 # Claude Code の status → このツールの状態。shell はシェルのコマンドを走らせている間で、Claude Code 自身の会話の一覧も
 # busy と同じく作業中と出す。waiting は許可・質問への答えを待っている（何を待つかは waitingFor）、
 # idle は返事を終えて次の指示を待っている
-CLAUDE_STATUS = {"busy": "working", "shell": "working", "waiting": "waiting", "idle": "idle"}
+CLAUDE_STATUS: dict[object, str] = {"busy": "working", "shell": "working", "waiting": "waiting", "idle": "idle"}
 REPLY_MAX = 4000  # 返事の文は、頭からこの文字数まで渡す
 TAIL_FIRST, TAIL_MAX = 256 * 1024, 32 * 1024 * 1024  # 会話の記録は末尾から読み、見つからなければ読む量を増やす
 _replies: dict[str, tuple[tuple[int, int], str | None]] = {}  # 記録のパス → ((大きさ, 更新の時刻), 最後の返事)
@@ -81,11 +81,11 @@ def transcript_path(base: Path, cwd: str, session_id: str) -> Path:
 def last_reply(session: dict) -> str | None:
     """会話の中で、エージェントが最後に書いた返事の文。記録が無い・読めなければ None。作業中なら、途中で書いた文のこともある。"""
     path = session.get("transcript")
-    try:
-        st = os.stat(path) if path else None
-    except OSError:
+    if not path:
         return None
-    if st is None:
+    try:
+        st = os.stat(path)
+    except OSError:
         return None
     stamp = (st.st_size, st.st_mtime_ns)
     cached = _replies.get(path)

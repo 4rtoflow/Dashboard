@@ -17,7 +17,8 @@ def host_name() -> str:
 def branches(got: dict) -> set[str]:
     """材料に出てくる branch（worktree・primary checkout・開いた PR）。"""
     out = set(got["worktrees"]) | {p["headRefName"] for p in got["prs"]}
-    return out | ({(got.get("primary") or {}).get("branch")} - {None})
+    primary = (got.get("primary") or {}).get("branch")
+    return out if primary is None else out | {primary}
 
 
 def issue_numbers(issue_of, got: dict) -> dict[str, int | None]:

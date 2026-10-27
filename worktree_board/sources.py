@@ -105,7 +105,8 @@ class Source:
     plugin はその repo の状態を決める関数（cards.Plugin）。"""
 
     def __init__(self, checkout: Path, repo: str | None = None, plugin=None):
-        self.checkout, self.repo, self.plugin, self.me = checkout, repo, plugin, None
+        self.checkout, self.repo, self.plugin = checkout, repo, plugin
+        self.me: str | None = None
 
     @property
     def label(self) -> str:
@@ -117,6 +118,7 @@ class Source:
 
     def issues(self, numbers) -> dict[int, dict]:
         """番号 → Issue。番号が PR だったり、無かったりすれば入れない。ISSUES_PER_QUERY 件ずつ 1 回の問い合わせで取る。"""
+        assert self.repo, "fetch() が先に repo を決める"
         owner, name = self.repo.split("/", 1)
         out: dict[int, dict] = {}
         wanted = sorted(n for n in numbers if isinstance(n, int) and not isinstance(n, bool) and n > 0)

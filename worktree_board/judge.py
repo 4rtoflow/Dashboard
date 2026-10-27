@@ -69,7 +69,8 @@ def reviewers(pr: dict, me: str) -> dict[str, dict]:
 
 def change_requests(pr: dict, me: str) -> tuple[list[str], list[str]]:
     """変更を求めたままの人を、今の head に対して求めた人と、求めた後に push された人に分ける。"""
-    on_head, pushed = [], []
+    on_head: list[str] = []
+    pushed: list[str] = []
     for who, r in sorted(reviewers(pr, me).items()):
         if r.get("state") == "CHANGES_REQUESTED":
             oid = (r.get("commit") or {}).get("oid")

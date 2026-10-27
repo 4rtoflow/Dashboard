@@ -103,7 +103,8 @@ def load_plugin(file: Path, index: int) -> Plugin:
         spec.loader.exec_module(module)
     except Exception as e:  # 自作のファイルの誤りは、どのファイルの何行目かを出す
         frame = next((f for f in reversed(traceback.extract_tb(e.__traceback__)) if f.filename == str(file)), None)
-        at = f"line {frame.lineno}: " if frame else (f"line {e.lineno}: " if getattr(e, "lineno", None) else "")
+        line = frame.lineno if frame else getattr(e, "lineno", None)  # 構文の誤りは、frame でなく e.lineno に行がある
+        at = f"line {line}: " if line else ""
         raise ConfigError("error.plugin_load", path=str(file), detail=f"{at}{type(e).__name__}: {e}") from None
     state = getattr(module, "state", None)
     if not callable(state):
