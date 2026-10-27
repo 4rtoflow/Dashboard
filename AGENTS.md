@@ -120,9 +120,12 @@ def state(worktree):
 | `me` | GitHub のログイン名 |
 | `issue_number` | ブランチ名から引いた Issue の番号（区切りに挟まれた数。`feature/5323-x` なら 5323）。決まりが違えば `issue_of(branch)` を書く |
 | `issue` | Issue（`number`・`title`・`state`・`stateReason`・`url`・`updatedAt`・`labels`（名前の並び）・`assignees`（ログイン名の並び）） |
+| `fetched` | プラグインの `fetch(repo, prs)` が最後の見直しで返したもの。`fetch` を書いていなければ None |
 
 - `issue` と `Session.last_reply` は、時間がかかるので、プラグインの `NEEDS` に `"issue"`・`"last_reply"` を書いたときだけ入る。要るものだけを書く。
-- `state` は画面が読み直すたび（10 秒おき）に呼ばれる。ネットワーク・重い処理・書き込みをしない。要る材料は `NEEDS` で頼む。
+- `state` は画面が読み直すたび（10 秒おき）に呼ばれる。ネットワーク・重い処理・書き込みをしない。要る材料は `NEEDS` で頼むか、`fetch` で取る。
+- テンプレートが取らない材料（PR のラベル・本文、Projects の Status など）は、`fetch(repo, prs)` を書いて自分で取る。GitHub の見直しのたび（60 秒おき）に repo ごとに 1 回呼ばれ、返したものが同じ repo のどの `worktree.fetched` にも入る。`repo` は `OWNER/REPO`、`prs` は開いた自分の PR の並び（`worktree.pr` と同じ形）。PR 番号をキーにした辞書を返すと、`state` で `worktree.fetched.get(worktree.pr["number"])` のように引ける。
+- `fetch` が失敗すると、その repo の取得の誤り（「プラグインの fetch が失敗した: <例外>」）として画面に出し、前に取れた材料でカードを出し続ける。
 
 ### 関数が返すもの
 

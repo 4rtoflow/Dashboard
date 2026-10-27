@@ -72,8 +72,8 @@ class FakeSource:
         return {12: {"number": 12, "title": "issue 12", "labels": ["bug"]}}
 
 
-def plugin(state=lambda wt: Turn("mine", wt.issue["title"] if wt.issue else "-"), needs=(), issue_of=issue_of):
-    return cards.Plugin(state, (Column("mine"),), None, frozenset(needs), issue_of)
+def plugin(state=lambda wt: Turn("mine", wt.issue["title"] if wt.issue else "-"), needs=(), issue_of=issue_of, fetch=None):
+    return cards.Plugin(state, (Column("mine"),), None, frozenset(needs), issue_of, fetch)
 
 
 class Fetching(unittest.TestCase):
@@ -97,6 +97,36 @@ class Fetching(unittest.TestCase):
         self.assertIn("ValueError: no", error["args"]["detail"])
         _, error = Watch(FakeSource(plugin(issue_of=lambda b: "12"))).fetch()
         self.assertIn("returned str", error["args"]["detail"])
+
+    def test_plugin_fetch_runs_each_refresh_and_reaches_every_worktree(self):
+        calls = []
+
+        def fetch(repo, prs):
+            calls.append((repo, [p["number"] for p in prs]))
+            prs[0]["number"] = 0  # 書き換えても、テンプレートの材料は変わらない
+            return {"label": "bug"}
+        board = Board([FakeSource(plugin(state=lambda wt: Turn("mine", wt.fetched["label"]), fetch=fetch))],
+                      sessions=lambda: [], host="h")
+        board.tick()
+        board.tick()
+        self.assertEqual(calls, [("o/r", [1]), ("o/r", [1])])
+        self.assertEqual({i["label"]: i["reason"]["text"] for i in board.view()["worktrees"]}, {"x": "bug", "wip": "bug"})
+        self.assertIsNone(Watch(FakeSource(plugin())).fetch()[0]["fetched"])
+
+    def test_broken_fetch_is_a_repo_error_and_keeps_the_last_cards(self):
+        broken = []
+
+        def fetch(repo, prs):
+            if broken:
+                raise RuntimeError("gh が止まった")
+            return "前の材料"
+        board = Board([FakeSource(plugin(state=lambda wt: Turn("mine", wt.fetched), fetch=fetch))], sessions=lambda: [], host="h")
+        board.tick()
+        broken.append(True)
+        board.tick()
+        error = board.errors()[0]["error"]
+        self.assertEqual((error["key"], error["args"]["detail"]), ("error.plugin_fetch", "RuntimeError: gh が止まった"))
+        self.assertEqual({i["reason"]["text"] for i in board.view()["worktrees"]}, {"前の材料"})
 
 
 def transcript(lines) -> str:
@@ -155,6 +185,13 @@ class Needs(unittest.TestCase):
             with self.assertRaises(config.ConfigError) as e:
                 self.load(f"NEEDS = {bad}\ndef state(wt):\n    return None\n")
             self.assertEqual(e.exception.key, "error.plugin_needs", bad)
+
+    def test_fetch_is_read(self):
+        self.assertEqual(self.load("def fetch(repo, prs):\n    return repo\ndef state(wt):\n    return None\n").fetch("o/r", []), "o/r")
+        self.assertIsNone(self.load("def state(wt):\n    return None\n").fetch)
+        with self.assertRaises(config.ConfigError) as e:
+            self.load("fetch = 3\ndef state(wt):\n    return None\n")
+        self.assertEqual((e.exception.key, e.exception.params["detail"]), ("error.plugin_load", "fetch is not a function"))
 
 
 if __name__ == "__main__":

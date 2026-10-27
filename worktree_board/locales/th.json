@@ -69,6 +69,7 @@
   "error.plugin_columns": "{path}: COLUMNS ต้องเป็นรายการที่ไม่ว่าง ประกอบด้วย id ของคอลัมน์ที่ไม่ซ้ำกัน (สตริงหรือ Column)",
   "error.plugin_needs": "{path}: NEEDS ใส่ได้เฉพาะ \"issue\" และ \"last_reply\" (พบ {value})",
   "error.plugin_issue_of": "ฟังก์ชัน issue_of ของปลั๊กอินทำงานผิดพลาด: {detail}",
+  "error.plugin_fetch": "ฟังก์ชัน fetch ของปลั๊กอินทำงานผิดพลาด: {detail}",
   "cli.description": "ดูว่า git worktree และ PR ของคุณอันไหนกำลังรอให้คุณจัดการ",
   "cli.help_serve": "แสดงแดชบอร์ดและรีเฟรชเป็นระยะ",
   "cli.help_status": "แสดงสถานะปัจจุบันเพียงครั้งเดียว",

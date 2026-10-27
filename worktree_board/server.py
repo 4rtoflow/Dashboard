@@ -29,13 +29,16 @@ class Watch:
         self.mergeable: dict[int, str] = {}
 
     def fetch(self) -> tuple[dict | None, dict | None]:
-        """材料とエラーのどちらか。Issue の番号はいつも、Issue の中身はプラグインが頼んだときだけ足す。"""
+        """材料とエラーのどちらか。Issue の番号はいつも、Issue の中身はプラグインが頼んだときだけ足す。
+        プラグインに fetch があれば、そのたびに呼んで、返したものを足す。"""
         plugin = self.source.plugin or cards.DEFAULT
         try:
             got = self.source.fetch()
             numbers = collect.issue_numbers(plugin.issue_of, got)
             issues = self.source.issues(set(numbers.values())) if "issue" in plugin.needs else {}
-            return {**got, "prs": settle(got["prs"], self.mergeable), "issue_numbers": numbers, "issues": issues}, None
+            fetched = collect.plugin_fetch(plugin.fetch, self.source.label, got["prs"]) if plugin.fetch else None
+            return {**got, "prs": settle(got["prs"], self.mergeable), "issue_numbers": numbers, "issues": issues,
+                    "fetched": fetched}, None
         except FetchError as e:
             return None, e.to_dict()
         except json.JSONDecodeError:

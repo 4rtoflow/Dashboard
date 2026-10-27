@@ -69,6 +69,7 @@
   "error.plugin_columns": "{path}: COLUMNS must be a non-empty list of unique column ids (strings or Column)",
   "error.plugin_needs": "{path}: NEEDS must list only \"issue\" and \"last_reply\" (got {value})",
   "error.plugin_issue_of": "The plugin's issue_of failed: {detail}",
+  "error.plugin_fetch": "The plugin's fetch failed: {detail}",
   "cli.description": "See which of your git worktrees and PRs are waiting on you",
   "cli.help_serve": "Show the dashboard and refresh it periodically",
   "cli.help_status": "Print the current state once",

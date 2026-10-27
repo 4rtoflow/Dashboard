@@ -69,6 +69,7 @@
   "error.plugin_columns": "{path}: COLUMNS debe ser una lista no vacía de ids de columna únicos (cadenas o Column)",
   "error.plugin_needs": "{path}: NEEDS solo puede incluir \"issue\" y \"last_reply\" (tiene {value})",
   "error.plugin_issue_of": "Falló issue_of del plugin: {detail}",
+  "error.plugin_fetch": "Falló fetch del plugin: {detail}",
   "cli.description": "Mira cuáles de tus worktrees y PRs de git esperan algo de ti",
   "cli.help_serve": "Muestra el panel y lo actualiza periódicamente",
   "cli.help_status": "Imprime el estado actual una sola vez",

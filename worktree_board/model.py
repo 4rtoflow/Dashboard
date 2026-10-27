@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,7 @@ class Worktree:
     issue_number は branch 名から引いた Issue の番号（プラグインの issue_of で決まり、既定は branch 名の中の番号）。
     issue はその Issue（number・title・state・stateReason・url・updatedAt・labels・assignees。labels はラベル名、
     assignees はログイン名の並び）。プラグインの NEEDS に "issue" があり、番号の Issue があるときだけ入る。
+    fetched は、プラグインの fetch(repo, prs) が最後の見直しで返したもの（同じ repo の worktree はどれも同じものを持つ）。
     """
     host: str  # worktree がある PC の名前
     repo: str  # OWNER/REPO
@@ -40,6 +42,7 @@ class Worktree:
     me: str = ""  # GitHub のログイン名
     issue_number: int | None = None
     issue: dict | None = None
+    fetched: Any = None
 
     def to_dict(self) -> dict:
         return asdict(self)

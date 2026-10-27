@@ -24,6 +24,16 @@
     # "issue": worktree.issue に Issue（title・state・labels・assignees など）。GitHub の見直しのたび（60 秒おき）に、repo ごとに 1 回で取る
     # "last_reply": worktree.sessions の各 Session の last_reply に、エージェントが最後に書いた返事の文。会話の記録を読む
 
+テンプレートが取らない材料（PR のラベル・本文など）は、fetch(repo, prs) を書いて自分で取る。GitHub の見直しのたび（60 秒おき）に
+repo ごとに 1 回呼ばれ、返したものが worktree.fetched に入る。repo は OWNER/REPO、prs は開いた自分の PR（worktree.pr と同じ形）の並び。
+
+    def fetch(repo, prs):
+        out = subprocess.run(["gh", "pr", "list", "--repo", repo, "--author", "@me", "--json", "number,labels"],
+                             capture_output=True, text=True, check=True).stdout
+        return {p["number"]: [x["name"] for x in p["labels"]] for p in json.loads(out)}
+
+fetch が失敗すると、その repo の取得の誤りとして画面に出し、前に取れた材料でカードを出し続ける。
+
 Issue の番号は、branch 名の中の番号（default.issue_of）。決まりが違うなら issue_of(branch) を書いて、番号か None を返す。
 issue_of が失敗すると、その repo の取得の誤りとして画面に出る。
 """

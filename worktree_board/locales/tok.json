@@ -69,6 +69,7 @@
   "error.plugin_columns": "{path}: COLUMNS o kulupu pi nimi linja ante (nimi anu Column)",
   "error.plugin_needs": "{path}: NEEDS li ken jo e \"issue\" e \"last_reply\" taso (ona li jo e {value})",
   "error.plugin_issue_of": "pali issue_of pi ilo sin li pakala: {detail}",
+  "error.plugin_fetch": "pali fetch pi ilo sin li pakala: {detail}",
   "cli.description": "o lukin e tomo pali e PR mi. ona seme li wile e pali mi?",
   "cli.help_serve": "o pana e lipu lukin. o lukin sin lon tenpo mute.",
   "cli.help_status": "o pana e sona ni lon tenpo wan taso",

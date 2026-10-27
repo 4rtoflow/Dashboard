@@ -112,7 +112,11 @@ def load_plugin(file: Path, index: int) -> Plugin:
     issue_of = getattr(module, "issue_of", DEFAULT.issue_of)
     if not callable(issue_of):
         raise ConfigError("error.plugin_load", path=str(file), detail="issue_of is not a function")
-    return Plugin(state, columns(getattr(module, "COLUMNS", None), file), str(file), needs(getattr(module, "NEEDS", ()), file), issue_of)
+    fetch = getattr(module, "fetch", None)
+    if fetch is not None and not callable(fetch):
+        raise ConfigError("error.plugin_load", path=str(file), detail="fetch is not a function")
+    return Plugin(state, columns(getattr(module, "COLUMNS", None), file), str(file), needs(getattr(module, "NEEDS", ()), file),
+                  issue_of, fetch)
 
 
 def needs(value, file: Path) -> frozenset[str]:

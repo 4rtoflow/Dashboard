@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
+from typing import Any
 
 from . import judge
 from .model import Column, Text, Turn, Worktree
@@ -13,12 +14,14 @@ NEEDS = frozenset({"issue", "last_reply"})  # プラグインが頼める、時�
 @dataclass(frozen=True)
 class Plugin:
     """repo に結び付いた状態を決める関数と、その列の並び。origin は読み込んだファイル（既定の判定なら None）。
-    needs は取ってほしい時間のかかる材料（NEEDS のうち）、issue_of は branch 名から Issue の番号を引く関数。"""
+    needs は取ってほしい時間のかかる材料（NEEDS のうち）、issue_of は branch 名から Issue の番号を引く関数。
+    fetch は見直しのたびに自分の材料を取る関数（repo と開いた PR の並びを受け取る）。書いていなければ None。"""
     state: Callable[[Worktree], Turn | None]
     columns: tuple[Column, ...]
     origin: str | None = None
     needs: frozenset[str] = frozenset()
     issue_of: Callable[[str | None], int | None] = judge.issue_of
+    fetch: Callable[[str, list[dict]], Any] | None = None
 
 
 DEFAULT = Plugin(judge.state, tuple(Column(c) for c in judge.COLUMNS))

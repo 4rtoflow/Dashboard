@@ -69,6 +69,7 @@
   "error.plugin_columns": "{path}: COLUMNS має бути непорожнім списком неповторюваних id стовпців (рядків або Column)",
   "error.plugin_needs": "{path}: у NEEDS можна вказати лише \"issue\" і \"last_reply\" (вказано {value})",
   "error.plugin_issue_of": "Функція issue_of плагіна завершилася помилкою: {detail}",
+  "error.plugin_fetch": "Функція fetch плагіна завершилася помилкою: {detail}",
   "cli.description": "Показує, які з ваших git worktree і PR чекають на вас",
   "cli.help_serve": "Показати панель і періодично оновлювати її",
   "cli.help_status": "Один раз вивести поточний стан",
