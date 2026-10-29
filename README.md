@@ -1,4 +1,4 @@
-# dashboard-template
+# Dashboard
 
 自分の git worktree・GitHub の PR・コーディングエージェント（Claude Code）の会話を見て、
 「今ボールを持っているのは誰か」をブラウザに出す Dashboard。いくつの repo でもまとめて見られる。
